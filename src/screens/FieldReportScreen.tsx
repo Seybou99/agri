@@ -1,0 +1,274 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { colors, spacing, typography } from '@theme';
+import {
+  ParcelCard,
+  ReportTabs,
+  KPICard,
+  YieldCard,
+  GrowthChart,
+  AnalysisSection,
+  NotesSection,
+  ScheduleSection,
+} from '@components/fieldReport';
+import type { ReportTabId } from '@components/fieldReport';
+import type { GrowthPeriod } from '@components/fieldReport';
+import type { KPICardData } from '@components/fieldReport';
+import type { GrowthChartData } from '@components/fieldReport';
+import { PLANTS_REQUIREMENTS } from '@constants/plants';
+import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
+
+const MOCK_PARCEL_DEFAULT = {
+  name: 'Parcelle oignon',
+  id: 'ML-BGD-2026-089',
+  culture: 'Oignon',
+  stage: 'Bulbaison',
+  surfaceHa: 5.2,
+};
+
+const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jui', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+type FieldReportParams = {
+  parcelId?: string;
+  crops?: string[];
+  surface?: number;
+  lat?: number;
+  lng?: number;
+  locationName?: string;
+};
+
+function buildKpis(soil: { ph: number; organicCarbon: number; nitrogen: number; phosphorus: number; potassium: number } | null, climate: { averageTemperature: number; annualRainfall: number } | null): KPICardData[] {
+  const ph = soil?.ph ?? 6.5;
+  const temp = climate?.averageTemperature ?? 28;
+  const rainRaw = climate?.annualRainfall ?? 800;
+  const rain = rainRaw > 0 ? rainRaw : 800;
+  let humidityLabel = 'Modérée';
+  if (rain < 500) humidityLabel = 'Faible';
+  else if (rain > 1000) humidityLabel = 'Élevée';
+  const n = soil?.nitrogen ?? 0.5;
+  const oc = soil?.organicCarbon ?? 1;
+  let nutrientsLabel = 'Moyen';
+  if (oc < 0.5 || n < 0.3) nutrientsLabel = 'Faible';
+  else if (oc > 1.5 && n > 0.8) nutrientsLabel = 'Élevé';
+
+  return [
+    { id: 'moisture', label: 'Humidité', value: humidityLabel, icon: '💧' },
+    { id: 'temp', label: 'Température', value: `${temp} °C`, icon: '🌡️' },
+    { id: 'ph', label: 'pH', value: ph.toFixed(1).replace('.', ','), icon: 'pH' },
+    { id: 'nutrients', label: 'Nutriments', value: nutrientsLabel, icon: '🍃' },
+  ];
+}
+
+function buildYieldFromReport(
+  parcel: { name: string; id: string; culture: string },
+  crops: string[],
+  matchingByCrop: Record<string, { score: number }>
+): { parcelName: string; parcelId: string; expectedHarvest: string; yieldKgHa: string } {
+  const first = crops[0];
+  const plant = first ? PLANTS_REQUIREMENTS[first] : null;
+  const match = first ? matchingByCrop[first] : null;
+  const y = plant?.yieldRange ?? { min: 20, max: 35 };
+  const factor = match ? Math.max(0.5, Math.min(1, match.score / 10)) : 1;
+  const avg = ((y.min + y.max) / 2) * factor * 1000;
+  const harvest = plant?.growingSeason?.end ? `Récolte ${plant.growingSeason.end}` : 'Selon semis';
+
+  let yieldStr: string;
+  if (crops.length > 1) {
+    const parts = crops.slice(0, 2).map((k) => {
+      const p = PLANTS_REQUIREMENTS[k];
+      const m = matchingByCrop[k];
+      const f = m ? Math.max(0.5, Math.min(1, m.score / 10)) : 1;
+      const mn = (p?.yieldRange?.min ?? 0) * 1000 * f;
+      const mx = (p?.yieldRange?.max ?? 0) * 1000 * f;
+      return `${p?.name ?? k}: ~${Math.round((mn + mx) / 2).toLocaleString('fr-FR')} kg/ha`;
+    });
+    yieldStr = parts.join(' • ');
+  } else {
+    yieldStr = `~${Math.round(avg).toLocaleString('fr-FR')} kg/ha`;
+  }
+
+  return {
+    parcelName: parcel.name,
+    parcelId: parcel.id,
+    expectedHarvest: harvest,
+    yieldKgHa: yieldStr,
+  };
+}
+
+function buildGrowthFromClimate(climate: { monthlyRainfall: number[] } | null, period: GrowthPeriod): GrowthChartData {
+  const monthly = climate?.monthlyRainfall ?? new Array(12).fill(67);
+  const take = period === 'Y' ? 12 : period === 'M' ? 6 : 4;
+  const bars = monthly.slice(-take);
+  const max = Math.max(...bars, 1);
+  const normalized = bars.map((v) => (v / max) * 100);
+  const avg = bars.reduce((s, v) => s + v, 0) / bars.length;
+  const recent = bars.slice(-2).reduce((s, v) => s + v, 0) / 2;
+  const older = bars.slice(0, -2).length ? bars.slice(0, -2).reduce((s, v) => s + v, 0) / (bars.length - 2) : recent;
+  const trend: 'up' | 'down' = recent >= older ? 'up' : 'down';
+  const labels = bars.length >= 2 ? [MONTHS[12 - bars.length] ?? '', MONTHS[11]] : [];
+
+  return {
+    value: `${Math.round(avg)} mm/mois`,
+    trend,
+    period,
+    bars: normalized,
+    labels,
+  };
+}
+
+export const FieldReportScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const params = route.params as FieldReportParams | undefined;
+  const [activeTab, setActiveTab] = useState<ReportTabId>('Overview');
+  const [growthPeriod, setGrowthPeriod] = useState<GrowthPeriod>('M');
+
+  const lat = params?.lat;
+  const lng = params?.lng;
+  const crops = params?.crops ?? [];
+  const { soil, climate, matchingByCrop, idealCrops, otherCrops, loading, error, refetch } = useDiagnosticReport(lat, lng, crops);
+
+  const parcel = useMemo(() => {
+    if (!params?.parcelId && !crops.length) return MOCK_PARCEL_DEFAULT;
+    const names = crops.map((k) => PLANTS_REQUIREMENTS[k]?.name ?? k);
+    const culture = names.length ? names.join(', ') : MOCK_PARCEL_DEFAULT.culture;
+    return {
+      name: params?.locationName ?? 'Ma parcelle',
+      id: params?.parcelId ?? 'ML-xxx',
+      culture,
+      stage: 'Bulbaison',
+      surfaceHa: params?.surface ?? MOCK_PARCEL_DEFAULT.surfaceHa,
+    };
+  }, [params?.parcelId, params?.locationName, params?.surface, crops]);
+
+  const kpis = useMemo(() => buildKpis(soil, climate), [soil, climate]);
+  const yieldData = useMemo(
+    () => buildYieldFromReport(parcel, crops, matchingByCrop),
+    [parcel, crops, matchingByCrop]
+  );
+  const growthData = useMemo(
+    () => buildGrowthFromClimate(climate, growthPeriod),
+    [climate, growthPeriod]
+  );
+
+  const handleBack = useCallback(() => {
+    if (navigation.canGoBack()) navigation.goBack();
+  }, [navigation]);
+
+  const hasCoords = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
+  const showOverview = activeTab === 'Overview';
+  const showOverviewContent = showOverview && !loading && (!hasCoords || !error);
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <ParcelCard
+          data={parcel}
+          onBack={handleBack}
+          onExpand={() => {}}
+        />
+        <ReportTabs active={activeTab} onSelect={setActiveTab} />
+
+        {error && hasCoords && (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={refetch}>
+              <Text style={styles.retryLabel}>Réessayer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {loading && hasCoords && (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Chargement du rapport…</Text>
+          </View>
+        )}
+
+        {showOverviewContent && (
+          <>
+            <View style={styles.kpiGrid}>
+              {kpis.map((kpi) => (
+                <KPICard key={kpi.id} data={kpi} />
+              ))}
+            </View>
+            <YieldCard
+              data={yieldData}
+              onAction={() => {}}
+            />
+            <GrowthChart
+              data={growthData}
+              onPeriodChange={setGrowthPeriod}
+            />
+          </>
+        )}
+
+        {activeTab === 'Analysis' && !loading && (
+          <AnalysisSection idealCrops={idealCrops} otherCrops={otherCrops} />
+        )}
+        {activeTab === 'Notes' && !loading && (
+          <NotesSection
+            idealCrops={idealCrops}
+            matchingByCrop={matchingByCrop}
+            selectedCrops={crops}
+          />
+        )}
+        {activeTab === 'Schedule' && !loading && (
+          <ScheduleSection idealCrops={idealCrops} selectedCrops={crops} />
+        )}
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.surface },
+  scroll: { flex: 1 },
+  content: { padding: spacing.lg, paddingBottom: 100 },
+  kpiGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  loadingBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+    gap: spacing.md,
+  },
+  loadingText: {
+    fontSize: typography.body.fontSize,
+    color: colors.text.secondary,
+  },
+  errorBox: {
+    backgroundColor: colors.gray[100],
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  errorText: {
+    fontSize: typography.body.fontSize,
+    color: colors.error,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  retryLabel: {
+    fontSize: typography.body.fontSize,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  placeholder: { minHeight: 80 },
+});

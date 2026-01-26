@@ -1,6 +1,68 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    "strict": true,
+    "jsx": "react-native",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@screens/*": [
+        "./src/screens/*"
+      ],
+      "@services/*": [
+        "./src/services/*"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ],
+      "@navigation/*": [
+        "./src/navigation/*"
+      ],
+      "@theme": [
+        "./src/theme"
+      ],
+      "@theme/*": [
+        "./src/theme/*"
+      ],
+      "@assets/*": [
+        "./src/assets/*"
+      ],
+      "@types/*": [
+        "./src/types/*"
+      ],
+      "@config": [
+        "./src/config"
+      ],
+      "@config/*": [
+        "./src/config/*"
+      ],
+      "@constants": [
+        "./src/constants"
+      ],
+      "@constants/*": [
+        "./src/constants/*"
+      ],
+      "@models": [
+        "./src/models"
+      ],
+      "@models/*": [
+        "./src/models/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

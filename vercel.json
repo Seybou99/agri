@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/getSoilFromGEE.ts": {
+      "maxDuration": 10
+    }
+  }
+}

@@ -1,0 +1,2 @@
+# Place here gee-sa.json (or symlink from project keys/).
+# Ignored: *.json. Never commit credentials.
