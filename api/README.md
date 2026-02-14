@@ -20,6 +20,8 @@ En local : `vercel dev` puis `http://localhost:3000/api`
 | GET | `/api/v1/icons` | Mapping culture → emoji + couleur (UX) |
 | POST | `/api/v1/recommendations` | Reco par sol/climat (body: sol_type, pluviometrie_mm, irrigation?, region?) |
 
+*Cultures, calendar, profitability, icons et recommendations sont servis par un seul handler `api/v1/[...slug].ts` pour rester sous la limite de 12 fonctions (plan Hobby Vercel).*
+
 ## Variables d’environnement (Vercel)
 - `OPENWEATHER_API_KEY` : clé OpenWeather (pour `/api/v1/weather`)
 
