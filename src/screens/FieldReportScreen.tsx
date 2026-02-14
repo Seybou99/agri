@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { colors, spacing, typography } from '@theme';
@@ -11,18 +12,19 @@ import {
   KPICard,
   YieldCard,
   GrowthChart,
-  AnalysisSection,
   NotesSection,
-  ScheduleSection,
+  CalendarGuideSection,
 } from '@components/fieldReport';
+import { AnalysisSection } from '@components/fieldReport/AnalysisSection';
 import type { ReportTabId } from '@components/fieldReport';
 import type { GrowthPeriod } from '@components/fieldReport';
 import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
 import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
-import { useCalendarFromApi } from '@hooks/useCalendarFromApi';
 import { useRecommendationsFromApi } from '@hooks/useRecommendationsFromApi';
+import { useProfitabilityFromApi } from '@hooks/useProfitabilityFromApi';
+import { useCalendarGuideData } from '@hooks/useCalendarGuideData';
 import { API_URL } from 'react-native-dotenv';
 
 const MOCK_PARCEL_DEFAULT = {
@@ -140,11 +142,12 @@ export const FieldReportScreen: React.FC = () => {
   const lng = params?.lng;
   const crops = params?.crops ?? [];
   const { soil, climate, matchingByCrop, idealCrops, otherCrops, loading, error, refetch } = useDiagnosticReport(lat, lng, crops);
-  const calendarFromApi = useCalendarFromApi(crops);
   const { recommendations: apiRecommendations } = useRecommendationsFromApi({
     pluviometrieMm: climate?.annualRainfall,
     region: params?.locationName,
   });
+  const { byCulture: profitabilityByCulture } = useProfitabilityFromApi(crops);
+  const calendarGuideData = useCalendarGuideData();
 
   const parcel = useMemo(() => {
     if (!params?.parcelId && !crops.length) return MOCK_PARCEL_DEFAULT;
@@ -257,6 +260,7 @@ export const FieldReportScreen: React.FC = () => {
     [navigation]
   );
 
+  const insets = useSafeAreaInsets();
   const hasCoords = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
   const showOverview = activeTab === 'Overview';
   const showOverviewContent = showOverview && !loading && (!hasCoords || !error);
@@ -265,7 +269,7 @@ export const FieldReportScreen: React.FC = () => {
     <View style={styles.container}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: spacing.lg + insets.top }]}
         showsVerticalScrollIndicator={false}
       >
         <ParcelCard
@@ -315,6 +319,23 @@ export const FieldReportScreen: React.FC = () => {
                 </View>
               </View>
             )}
+            {crops.length > 0 && Object.keys(profitabilityByCulture).length > 0 && (
+              <View style={styles.apiRecoCard}>
+                <Text style={styles.apiRecoTitle}>Rentabilité indicative (€/ha, Mali)</Text>
+                <View style={styles.apiRecoList}>
+                  {crops.map((id) => {
+                    const p = profitabilityByCulture[id];
+                    if (!p) return null;
+                    return (
+                      <View key={p.culture_id} style={styles.apiRecoRow}>
+                        <Text style={styles.apiRecoName}>{p.culture}</Text>
+                        <Text style={styles.apiRecoScore}>{p.revenu_ha_min} – {p.revenu_ha_max} €</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
             <GrowthChart
               data={growthData}
               onPeriodChange={setGrowthPeriod}
@@ -347,8 +368,14 @@ export const FieldReportScreen: React.FC = () => {
             selectedCrops={crops}
           />
         )}
-        {activeTab === 'Schedule' && !loading && (
-          <ScheduleSection idealCrops={idealCrops} selectedCrops={crops} calendarFromApi={calendarFromApi} />
+        {activeTab === 'Calendrier' && !loading && (
+          <CalendarGuideSection
+            calendars={calendarGuideData.calendars}
+            icons={calendarGuideData.icons}
+            profitability={calendarGuideData.profitability}
+            loading={calendarGuideData.loading}
+            fromApi={calendarGuideData.fromApi}
+          />
         )}
       </ScrollView>
     </View>
@@ -358,7 +385,7 @@ export const FieldReportScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
-  content: { padding: spacing.lg, paddingBottom: 100 },
+  content: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

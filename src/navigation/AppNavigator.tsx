@@ -13,8 +13,16 @@ import { WeatherHomeScreen } from '../screens/WeatherHomeScreen';
 import { Next7DaysScreen } from '../screens/Next7DaysScreen';
 import { ForecastScreen } from '../screens/ForecastScreen';
 
+/** Params pour navigation imbriquée vers un onglet (ex. Marketplace avec filtre). */
+export type MainTabsParams =
+  | undefined
+  | { screen: 'Marketplace'; params?: { filterCategory?: string; filterCrop?: string } }
+  | { screen: 'Home' }
+  | { screen: 'Diagnostic' }
+  | { screen: 'Academy' };
+
 export type RootStackParamList = {
-  MainTabs: undefined;
+  MainTabs: MainTabsParams;
   DiagnosticMap: undefined;
   DiagnosticConfig: { lat: number; lng: number; locationName?: string };
   FieldReport: {

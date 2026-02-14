@@ -60,6 +60,14 @@ export interface ApiRecommendationsResponse {
   criteres?: Record<string, unknown>;
 }
 
+export interface ApiProfitabilityItem {
+  culture_id: string;
+  culture: string;
+  revenu_ha_min: number;
+  revenu_ha_max: number;
+  niveau: string;
+}
+
 export async function fetchCultures(params?: {
   categorie?: string;
   rentable?: boolean;
@@ -100,6 +108,19 @@ export async function fetchIcons(): Promise<ApiIconItem[] | null> {
     const res = await fetch(`${base}/api/v1/icons`);
     if (!res.ok) return null;
     const json = (await res.json()) as { data: ApiIconItem[] };
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchProfitability(): Promise<ApiProfitabilityItem[] | null> {
+  const base = getBaseUrl();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/api/v1/profitability`);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { data: ApiProfitabilityItem[] };
     return json.data ?? null;
   } catch {
     return null;

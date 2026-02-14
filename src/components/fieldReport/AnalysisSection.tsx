@@ -4,9 +4,10 @@ import { colors, spacing, typography } from '@theme';
 import { PLANTS_REQUIREMENTS } from '@constants/plants';
 import type { IdealCropItem } from '@hooks/useDiagnosticReport';
 
-interface AnalysisSectionProps {
+export interface AnalysisSectionProps {
   idealCrops: IdealCropItem[];
   otherCrops: IdealCropItem[];
+  onBuySeeds?: (cropKey: string) => void;
   style?: ViewStyle;
 }
 
@@ -163,6 +164,7 @@ export const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               compact
               expanded={expandedOther === key}
               onToggle={() => setExpandedOther((prev) => (prev === key ? null : key))}
+              onBuySeeds={onBuySeeds}
             />
           ))}
         </>
