@@ -24,6 +24,7 @@ function CropCard({
   compact,
   expanded,
   onToggle,
+  onBuySeeds,
 }: {
   cropKey: string;
   name: string;
@@ -31,6 +32,7 @@ function CropCard({
   compact?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
+  onBuySeeds?: (cropKey: string) => void;
 }) {
   const plant = PLANTS_REQUIREMENTS[cropKey];
   const suitability = SUITABILITY_LABEL[result.suitability] ?? result.suitability;
@@ -61,6 +63,15 @@ function CropCard({
             <View style={styles.block}>
               <Text style={styles.blockTitle}>Semences recommandées</Text>
               <Text style={styles.blockContent}>{seedTypes.join(' · ')}</Text>
+              {onBuySeeds && !compact && (
+                <TouchableOpacity
+                  style={styles.buyButton}
+                  onPress={() => onBuySeeds(cropKey)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.buyButtonText}>🛒 Acheter les semences</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
           {tips.length > 0 && (
@@ -93,7 +104,12 @@ function CropCard({
  * Section Analysis : cultures idéales pour la zone (pH, humidité, pluviométrie),
  * semences recommandées, conseils pratiques, et autres cultures.
  */
-export const AnalysisSection: React.FC<AnalysisSectionProps> = ({ idealCrops, otherCrops, style }) => {
+export const AnalysisSection: React.FC<AnalysisSectionProps> = ({
+  idealCrops,
+  otherCrops,
+  style,
+  onBuySeeds,
+}) => {
   const [expandedOther, setExpandedOther] = useState<string | null>(null);
 
   if (!idealCrops.length && !otherCrops.length) {
@@ -114,7 +130,13 @@ export const AnalysisSection: React.FC<AnalysisSectionProps> = ({ idealCrops, ot
       </Text>
 
       {idealCrops.map(({ key, name, result }) => (
-        <CropCard key={key} cropKey={key} name={name} result={result} />
+        <CropCard
+          key={key}
+          cropKey={key}
+          name={name}
+          result={result}
+          onBuySeeds={onBuySeeds}
+        />
       ))}
 
       {otherCrops.length > 0 && (
@@ -236,5 +258,18 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     lineHeight: 22,
     marginBottom: 2,
+  },
+  buyButton: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  buyButtonText: {
+    ...typography.bodySmall,
+    color: colors.white,
+    fontWeight: '600',
   },
 });

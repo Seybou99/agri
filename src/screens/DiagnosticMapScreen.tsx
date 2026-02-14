@@ -22,6 +22,8 @@ import { colors, spacing, typography } from '@theme';
 import { Button } from '@components/common';
 import { geocodePlace } from '@services/geocoding';
 import { xyToLatLng, type UtmZone } from '@utils/utmToLatLng';
+import { triggerHaptic } from '@utils/haptics';
+import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN_BOTTOM } from '@navigation/styles/tabNavigatorStyles';
 
 const MALI_CENTER = { latitude: 12.6392, longitude: -8.0029, latitudeDelta: 8, longitudeDelta: 8 };
 
@@ -66,6 +68,7 @@ export const DiagnosticMapScreen: React.FC = () => {
       Alert.alert('Emplacement requis', 'Choisissez un mode et renseignez l’emplacement (lieu, GPS, X/Y ou position).');
       return;
     }
+    triggerHaptic();
     getRootStack()?.navigate('DiagnosticConfig', {
       lat: marker.lat,
       lng: marker.lng,
@@ -129,6 +132,7 @@ export const DiagnosticMapScreen: React.FC = () => {
   }, [xInput, yInput, utmZone, setMarkerAndCenter]);
 
   const goToMyPosition = useCallback(async () => {
+    triggerHaptic();
     setLoadingLocation(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -167,8 +171,31 @@ export const DiagnosticMapScreen: React.FC = () => {
         )}
       </MapView>
 
+      {/* Bouton flottant "Je suis ici" — un tap = position GPS + centrage (Phase 0 UX inclusive) */}
+      <TouchableOpacity
+        style={[styles.floatingMyPositionBtn, { top: (insets.top || 20) + spacing.sm }]}
+        onPress={goToMyPosition}
+        disabled={loadingLocation}
+        activeOpacity={0.8}
+        accessibilityLabel="Je suis ici"
+        accessibilityRole="button"
+      >
+        {loadingLocation ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Text style={styles.floatingMyPositionLabel}>📍 Je suis ici</Text>
+        )}
+      </TouchableOpacity>
+
       <KeyboardAvoidingView
-        style={[styles.overlay, { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.sm }]}
+        style={[
+          styles.overlay,
+          {
+            paddingTop: insets.top + spacing.sm,
+            paddingBottom: spacing.lg,
+            bottom: TAB_BAR_HEIGHT + TAB_BAR_MARGIN_BOTTOM + (insets.bottom || 0),
+          },
+        ]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
@@ -387,4 +414,23 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   actionBtnLabel: { fontSize: typography.body.fontSize, fontWeight: '600', color: colors.primary },
+  floatingMyPositionBtn: {
+    position: 'absolute',
+    right: spacing.md,
+    minHeight: 48,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  floatingMyPositionLabel: { fontSize: 16, fontWeight: '600', color: colors.primary },
 });

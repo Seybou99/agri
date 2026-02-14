@@ -7,14 +7,19 @@ import {
   LayoutAnimation,
   UIManager,
   Platform,
+  Text,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import Svg, { Path } from 'react-native-svg';
 import {
   tabNavigatorStyles,
   tabBarColors,
   TAB_BAR_MARGIN_BOTTOM,
 } from '../styles/tabNavigatorStyles';
+import { colors, spacing, typography } from '@theme';
+import type { AppNavigationProp } from '@navigation/AppNavigator';
 
 /** Tailles des icônes */
 const ICON_SIZE_ACTIVE = 26;
@@ -100,6 +105,7 @@ const TabBarItem: React.FC<TabBarItemProps> = ({
 export const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
   const { state, descriptors, navigation } = props;
   const insets = useSafeAreaInsets();
+  const stackNav = navigation.getParent() as AppNavigationProp | undefined;
 
   if (!state?.routes?.length || !descriptors || !navigation) {
     return null;
@@ -108,8 +114,23 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
   const routes = state.routes;
   const bottomPadding = Math.max(TAB_BAR_MARGIN_BOTTOM, insets.bottom);
 
+  const handleNewDiagnostic = () => {
+    stackNav?.navigate('DiagnosticMap');
+  };
+
   return (
     <View style={[tabNavigatorStyles.wrapper, { paddingBottom: bottomPadding }]}>
+      {/* Bouton FAB intégré */}
+      <TouchableOpacity
+        style={styles.fabButton}
+        onPress={handleNewDiagnostic}
+        activeOpacity={0.9}
+      >
+        <View style={styles.fabContent}>
+          <Text style={styles.fabIcon}>+</Text>
+        </View>
+      </TouchableOpacity>
+
       <View style={tabNavigatorStyles.tabBar}>
         {routes.map((route, index) => {
           const { options } = descriptors[route.key];
@@ -140,3 +161,37 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  fabButton: {
+    position: 'absolute',
+    top: -30,
+    alignSelf: 'center',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primaryDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 10,
+  },
+  fabContent: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+    backgroundColor: colors.primaryDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fabIcon: {
+    ...typography.h1,
+    color: colors.white,
+    fontWeight: '300',
+    lineHeight: 40,
+  },
+});

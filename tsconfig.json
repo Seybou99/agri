@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
     "jsx": "react-native",
     "baseUrl": ".",
     "paths": {
@@ -10,6 +14,9 @@
       ],
       "@components/*": [
         "./src/components/*"
+      ],
+      "@screens": [
+        "./src/screens/index"
       ],
       "@screens/*": [
         "./src/screens/*"
@@ -31,6 +38,9 @@
       ],
       "@theme/*": [
         "./src/theme/*"
+      ],
+      "@assets": [
+        "./src/assets"
       ],
       "@assets/*": [
         "./src/assets/*"
@@ -55,6 +65,12 @@
       ],
       "@models/*": [
         "./src/models/*"
+      ],
+      "@contexts": [
+        "./src/contexts"
+      ],
+      "@contexts/*": [
+        "./src/contexts/*"
       ]
     }
   },

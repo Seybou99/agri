@@ -44,9 +44,10 @@ function ensureEEInitialized(): Promise<void> {
   if (eeInitialized) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
-    const keyJson = process.env.GEE_SERVICE_ACCOUNT_JSON;
+    // Support des deux noms de variables (ancien et nouveau)
+    const keyJson = process.env.COMPTE_DE_SERVICE_GEE_JSON || process.env.GEE_SERVICE_ACCOUNT_JSON;
     if (!keyJson) {
-      reject(new Error('GEE_SERVICE_ACCOUNT_JSON non défini dans les variables d\'environnement'));
+      reject(new Error('COMPTE_DE_SERVICE_GEE_JSON ou GEE_SERVICE_ACCOUNT_JSON non défini dans les variables d\'environnement'));
       return;
     }
 
@@ -54,15 +55,18 @@ function ensureEEInitialized(): Promise<void> {
     try {
       key = JSON.parse(keyJson) as object;
     } catch (e) {
-      reject(new Error(`GEE: impossible de parser GEE_SERVICE_ACCOUNT_JSON: ${e}`));
+      reject(new Error(`GEE: impossible de parser COMPTE_DE_SERVICE_GEE_JSON: ${e}`));
       return;
     }
+
+    // Support des deux noms de variables (ancien et nouveau)
+    const projectId = process.env.ID_PROJET_GEE || process.env.GEE_PROJECT_ID;
 
     ee.data.authenticateViaPrivateKey(
       key,
       () => {
         ee.initialize(
-          { project: process.env.GEE_PROJECT_ID || undefined },
+          { project: projectId || undefined },
           () => {
             eeInitialized = true;
             resolve();

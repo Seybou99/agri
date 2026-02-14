@@ -1,0 +1,6 @@
+agri-web
+.next
+node_modules
+.expo
+dist
+build

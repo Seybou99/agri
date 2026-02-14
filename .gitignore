@@ -90,3 +90,4 @@ functions/lib/
 
 # Logs
 *.log
+.env*.local

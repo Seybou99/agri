@@ -1,7 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { colors, spacing, typography } from '@theme';
+import type { AppNavigationProp } from '@navigation/AppNavigator';
 import {
   ParcelCard,
   ReportTabs,
@@ -18,6 +21,7 @@ import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
 import { PLANTS_REQUIREMENTS } from '@constants/plants';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
+import { API_URL } from 'react-native-dotenv';
 
 const MOCK_PARCEL_DEFAULT = {
   name: 'Parcelle oignon',
@@ -118,11 +122,12 @@ function buildGrowthFromClimate(climate: { monthlyRainfall: number[] } | null, p
 }
 
 export const FieldReportScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<AppNavigationProp>();
   const route = useRoute();
   const params = route.params as FieldReportParams | undefined;
   const [activeTab, setActiveTab] = useState<ReportTabId>('Overview');
   const [growthPeriod, setGrowthPeriod] = useState<GrowthPeriod>('M');
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const lat = params?.lat;
   const lng = params?.lng;
@@ -155,6 +160,90 @@ export const FieldReportScreen: React.FC = () => {
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
   }, [navigation]);
+
+  const handleExportPdf = useCallback(async () => {
+    const baseUrl = typeof API_URL === 'string' && API_URL && !API_URL.includes('example.com') ? API_URL.trim() : null;
+    if (!baseUrl) {
+      Alert.alert(
+        'Export PDF',
+        'Configurez API_URL dans .env (URL de votre API Vercel) pour activer l\'export PDF.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      const payload = {
+        parcel: { ...parcel, surfaceHa: parcel.surfaceHa },
+        kpis,
+        yield: yieldData,
+        growth: { value: growthData.value, trend: growthData.trend, period: growthData.period },
+        recommendations: idealCrops.slice(0, 5).map((c) => (typeof c === 'string' ? c : (c as { name?: string }).name) || String(c)),
+      };
+      const url = `${baseUrl.replace(/\/$/, '')}/api/v1/report-pdf`;
+      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+            resolve(xhr.response);
+            return;
+          }
+          if (xhr.status >= 400) {
+            try {
+              const raw = xhr.response ? new TextDecoder().decode(new Uint8Array(xhr.response)) : '';
+              const err = raw ? JSON.parse(raw) : {};
+              reject(new Error((err as { message?: string }).message || `Erreur ${xhr.status}`));
+            } catch {
+              reject(new Error(`Erreur ${xhr.status}`));
+            }
+            return;
+          }
+          reject(new Error('Réponse vide'));
+        };
+        xhr.onerror = () => reject(new Error('Erreur réseau'));
+        xhr.send(JSON.stringify(payload));
+      });
+      const bytes = new Uint8Array(arrayBuffer);
+      const base64 =
+        typeof Buffer !== 'undefined'
+          ? Buffer.from(bytes).toString('base64')
+          : (() => {
+              let b = '';
+              const chunk = 0x8000;
+              for (let i = 0; i < bytes.length; i += chunk) {
+                b += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk) as unknown as number[]);
+              }
+              return (global as any).btoa ? (global as any).btoa(b) : b;
+            })();
+      const filename = `rapport-senegundo-${parcel.id}-${Date.now()}.pdf`;
+      const path = `${FileSystem.cacheDirectory}${filename}`;
+      await FileSystem.writeAsStringAsync(path, base64, { encoding: FileSystem.EncodingType.Base64 });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(path, { mimeType: 'application/pdf', dialogTitle: 'Exporter le rapport' });
+      } else {
+        Alert.alert('PDF généré', `Fichier enregistré : ${path}`, [{ text: 'OK' }]);
+      }
+    } catch (e) {
+      Alert.alert('Export PDF', e instanceof Error ? e.message : 'Impossible de générer le PDF.', [{ text: 'OK' }]);
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [parcel, kpis, yieldData, growthData, idealCrops]);
+
+  const handleBuySeeds = useCallback(
+    (cropKey: string) => {
+      // Naviguer vers le Marketplace avec filtre sur les semences de cette culture
+      navigation.navigate('MainTabs', {
+        screen: 'Marketplace',
+        params: { filterCategory: 'Semences', filterCrop: cropKey },
+      });
+    },
+    [navigation]
+  );
 
   const hasCoords = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
   const showOverview = activeTab === 'Overview';
@@ -205,11 +294,26 @@ export const FieldReportScreen: React.FC = () => {
               data={growthData}
               onPeriodChange={setGrowthPeriod}
             />
+            <TouchableOpacity
+              style={styles.exportPdfButton}
+              onPress={handleExportPdf}
+              disabled={exportingPdf}
+            >
+              {exportingPdf ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Text style={styles.exportPdfLabel}>📄 Exporter en PDF</Text>
+              )}
+            </TouchableOpacity>
           </>
         )}
 
         {activeTab === 'Analysis' && !loading && (
-          <AnalysisSection idealCrops={idealCrops} otherCrops={otherCrops} />
+          <AnalysisSection
+            idealCrops={idealCrops}
+            otherCrops={otherCrops}
+            onBuySeeds={handleBuySeeds}
+          />
         )}
         {activeTab === 'Notes' && !loading && (
           <NotesSection
@@ -267,6 +371,21 @@ const styles = StyleSheet.create({
   },
   retryLabel: {
     fontSize: typography.body.fontSize,
+    fontWeight: '600',
+    color: colors.white,
+  },
+  exportPdfButton: {
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  exportPdfLabel: {
+    fontSize: 16,
     fontWeight: '600',
     color: colors.white,
   },
