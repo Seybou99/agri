@@ -1,12 +1,1 @@
-{
-  "version": 2,
-  "buildCommand": null,
-  "outputDirectory": null,
-  "framework": null,
-  "functions": {
-    "api/getSoilFromGEE.ts": { "maxDuration": 10 },
-    "api/v1/weather.ts": { "maxDuration": 15 },
-    "api/v1/diagnostics.ts": { "maxDuration": 10 },
-    "api/v1/report-pdf.ts": { "maxDuration": 30 }
-  }
-}
+{"version":2,"buildCommand":null,"outputDirectory":null,"framework":null,"functions":{"api/getSoilFromGEE.ts":{"maxDuration":10},"api/v1/weather.ts":{"maxDuration":15},"api/v1/diagnostics.ts":{"maxDuration":10},"api/v1/report-pdf.ts":{"maxDuration":30},"api/v1/cultures/index.ts":{"maxDuration":10},"api/v1/cultures/[id].ts":{"maxDuration":10},"api/v1/calendar.ts":{"maxDuration":10},"api/v1/profitability.ts":{"maxDuration":10},"api/v1/icons.ts":{"maxDuration":10},"api/v1/recommendations.ts":{"maxDuration":10}}}

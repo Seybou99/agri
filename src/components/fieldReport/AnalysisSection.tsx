@@ -17,6 +17,13 @@ const SUITABILITY_LABEL: Record<string, string> = {
   Low: 'Faible',
 };
 
+/** Indicateur visuel Phase 2 : score → 🔴🟡🟢 (aligné sur matchingEngine) */
+function getScoreIndicator(score: number): string {
+  if (score >= 6.5) return '🟢';
+  if (score >= 5) return '🟡';
+  return '🔴';
+}
+
 function CropCard({
   cropKey,
   name,
@@ -40,10 +47,12 @@ function CropCard({
   const tips = plant?.practicalTips ?? [];
   const showDetails = !compact || expanded;
 
+  const indicator = getScoreIndicator(result.score);
   const header = (
     <View style={styles.cardHeader}>
       <Text style={styles.cropName}>{name}</Text>
       <View style={styles.scoreBadge}>
+        <Text style={styles.scoreIndicator}>{indicator}</Text>
         <Text style={styles.scoreText}>{result.score}/10</Text>
       </View>
     </View>
@@ -223,7 +232,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primaryDark,
   },
+  scoreIndicator: {
+    fontSize: 18,
+    marginRight: 4,
+  },
   scoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,

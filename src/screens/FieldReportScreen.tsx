@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { colors, spacing, typography } from '@theme';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
@@ -19,8 +19,10 @@ import type { ReportTabId } from '@components/fieldReport';
 import type { GrowthPeriod } from '@components/fieldReport';
 import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
-import { PLANTS_REQUIREMENTS } from '@constants/plants';
+import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
+import { useCalendarFromApi } from '@hooks/useCalendarFromApi';
+import { useRecommendationsFromApi } from '@hooks/useRecommendationsFromApi';
 import { API_URL } from 'react-native-dotenv';
 
 const MOCK_PARCEL_DEFAULT = {
@@ -75,7 +77,12 @@ function buildYieldFromReport(
   const y = plant?.yieldRange ?? { min: 20, max: 35 };
   const factor = match ? Math.max(0.5, Math.min(1, match.score / 10)) : 1;
   const avg = ((y.min + y.max) / 2) * factor * 1000;
-  const harvest = plant?.growingSeason?.end ? `Récolte ${plant.growingSeason.end}` : 'Selon semis';
+  const gs = plant?.growingSeason;
+  const recolteMois =
+    gs?.cycleLengthMonths != null && gs.start
+      ? getMoisRecolte(gs.start, gs.cycleLengthMonths)
+      : gs?.end ?? null;
+  const harvest = recolteMois ? `Récolte ${recolteMois}` : 'Selon semis';
 
   let yieldStr: string;
   if (crops.length > 1) {
@@ -133,6 +140,11 @@ export const FieldReportScreen: React.FC = () => {
   const lng = params?.lng;
   const crops = params?.crops ?? [];
   const { soil, climate, matchingByCrop, idealCrops, otherCrops, loading, error, refetch } = useDiagnosticReport(lat, lng, crops);
+  const calendarFromApi = useCalendarFromApi(crops);
+  const { recommendations: apiRecommendations } = useRecommendationsFromApi({
+    pluviometrieMm: climate?.annualRainfall,
+    region: params?.locationName,
+  });
 
   const parcel = useMemo(() => {
     if (!params?.parcelId && !crops.length) return MOCK_PARCEL_DEFAULT;
@@ -290,6 +302,19 @@ export const FieldReportScreen: React.FC = () => {
               data={yieldData}
               onAction={() => {}}
             />
+            {apiRecommendations.length > 0 && (
+              <View style={styles.apiRecoCard}>
+                <Text style={styles.apiRecoTitle}>Cultures recommandées (selon sol et climat)</Text>
+                <View style={styles.apiRecoList}>
+                  {apiRecommendations.slice(0, 5).map((r) => (
+                    <View key={r.culture_id} style={styles.apiRecoRow}>
+                      <Text style={styles.apiRecoName}>{r.culture}</Text>
+                      <Text style={styles.apiRecoScore}>{r.score}/100</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
             <GrowthChart
               data={growthData}
               onPeriodChange={setGrowthPeriod}
@@ -323,7 +348,7 @@ export const FieldReportScreen: React.FC = () => {
           />
         )}
         {activeTab === 'Schedule' && !loading && (
-          <ScheduleSection idealCrops={idealCrops} selectedCrops={crops} />
+          <ScheduleSection idealCrops={idealCrops} selectedCrops={crops} calendarFromApi={calendarFromApi} />
         )}
       </ScrollView>
     </View>
@@ -374,6 +399,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.white,
   },
+  apiRecoCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  apiRecoTitle: {
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: '600',
+    color: colors.text.secondary,
+    marginBottom: spacing.sm,
+  },
+  apiRecoList: { gap: spacing.xs },
+  apiRecoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  apiRecoName: { fontSize: typography.body.fontSize, color: colors.text.primary },
+  apiRecoScore: { fontSize: typography.bodySmall.fontSize, color: colors.primary, fontWeight: '600' },
   exportPdfButton: {
     marginTop: spacing.lg,
     paddingVertical: spacing.md,

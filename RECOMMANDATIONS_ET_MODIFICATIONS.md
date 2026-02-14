@@ -157,11 +157,11 @@ Sync auto dès réseau.
 - [x] **Export PDF** : endpoint `/api/v1/report-pdf` génère un PDF (pdfkit) ; bouton « Exporter en PDF » sur l’écran Rapport de parcelle.
 
 ### Phase 2 — Inclusion
-- Audio sur les écrans clés (accueil, diagnostic, météo, marketplace).
-- Sélecteur visuel cultures + surface Petit/Moyen/Grand.
-- Score visuel 🔴🟡🟢 + recommandation vocale.
-- Mode offline (cache diagnostic + Académie téléchargeable).
-- Bouton “Je suis ici” et GPS par défaut sur la carte.
+- [ ] Audio sur les écrans clés (accueil, diagnostic, météo, marketplace).
+- [x] **Sélecteur visuel** cultures (icônes) + surface Petit / Moyen / Grand.
+- [x] **Score visuel** 🔴🟡🟢 (onglet Analysis) ; recommandation vocale à venir.
+- [ ] Mode offline (cache diagnostic + Académie téléchargeable).
+- [x] Bouton « Je suis ici » et GPS par défaut sur la carte (Phase 0).
 
 ### Phase 3 — Monétisation & scale
 - Mobile money + escrow + wallet interne.

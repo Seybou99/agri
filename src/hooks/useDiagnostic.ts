@@ -1,7 +1,7 @@
 // Hook pour gérer les diagnostics
 import { useState } from 'react';
 import { Diagnostic, DiagnosticStatus, Coordinates } from '@models/Diagnostic';
-import { PLANTS_REQUIREMENTS } from '@constants/plants';
+import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
 import { fetchSoilData, fetchClimateData } from '@services/agronomy';
 import { calculateSuitabilityScore } from '@services/agronomy/matchingEngine';
 
@@ -76,7 +76,10 @@ export function useDiagnostic() {
           },
           calendar: {
             optimalPlantingStart: plantRequirements.growingSeason.start,
-            optimalPlantingEnd: plantRequirements.growingSeason.end,
+            optimalPlantingEnd:
+              plantRequirements.growingSeason.cycleLengthMonths != null && plantRequirements.growingSeason.start
+                ? getMoisRecolte(plantRequirements.growingSeason.start, plantRequirements.growingSeason.cycleLengthMonths)
+                : plantRequirements.growingSeason.end ?? '–',
             harvestPeriod: 'À déterminer selon la variété',
           },
         },

@@ -26,8 +26,10 @@ export interface PlantRequirements {
   climate: ClimateRequirements;
   waterNeeds: 'faible' | 'moyen' | 'élevé';
   growingSeason: {
-    start: string; // Mois optimal de début
-    end: string; // Mois optimal de fin
+    start: string; // Mois optimal de semis (ex. "juin")
+    end?: string; // Mois de récolte (optionnel, calculé si cycleLengthMonths est fourni)
+    /** Durée du cycle en mois (semis → récolte). Utilisé pour calculer le mois de récolte. */
+    cycleLengthMonths?: number;
   };
   yieldRange: {
     min: number; // tonnes/hectare minimum

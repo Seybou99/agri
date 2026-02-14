@@ -1,12 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { colors, spacing, typography } from '@theme';
-import { PLANTS_REQUIREMENTS } from '@constants/plants';
+import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
 import type { IdealCropItem } from '@hooks/useDiagnosticReport';
+
+export interface CalendarFromApi {
+  semis: string;
+  recolte: string;
+}
 
 interface ScheduleSectionProps {
   idealCrops: IdealCropItem[];
   selectedCrops: string[];
+  /** Calendrier depuis l'API (cultureId → semis/recolte). Si fourni, prioritaire sur plants. */
+  calendarFromApi?: Record<string, CalendarFromApi>;
   style?: ViewStyle;
 }
 
@@ -16,15 +23,26 @@ interface ScheduleSectionProps {
 export const ScheduleSection: React.FC<ScheduleSectionProps> = ({
   idealCrops,
   selectedCrops,
+  calendarFromApi,
   style,
 }) => {
   const keys = Array.from(new Set([...selectedCrops, ...idealCrops.map((c) => c.key)]));
   const items = keys
     .map((k) => {
+      const apiCal = calendarFromApi?.[k];
+      if (apiCal) {
+        const name = PLANTS_REQUIREMENTS[k]?.name ?? k;
+        return { key: k, name, semis: apiCal.semis, recolte: apiCal.recolte };
+      }
       const p = PLANTS_REQUIREMENTS[k];
       if (!p) return null;
-      const start = p.growingSeason?.start ?? '–';
-      const end = p.growingSeason?.end ?? '–';
+      const startRaw = p.growingSeason?.start ?? '–';
+      const start = startRaw === '–' ? '–' : startRaw.charAt(0).toUpperCase() + startRaw.slice(1);
+      const cycleMonths = p.growingSeason?.cycleLengthMonths;
+      const end =
+        cycleMonths != null && startRaw !== '–'
+          ? getMoisRecolte(startRaw, cycleMonths)
+          : (p.growingSeason?.end ? p.growingSeason.end.charAt(0).toUpperCase() + p.growingSeason.end.slice(1) : '–');
       return { key: k, name: p.name, semis: start, recolte: end };
     })
     .filter(Boolean) as { key: string; name: string; semis: string; recolte: string }[];

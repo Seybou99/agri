@@ -3,6 +3,24 @@
 
 import { PlantRequirements } from '@models/Plant';
 
+/** Mois en français (ordre calendaire) pour le calcul semis → récolte */
+const MOIS_ORDRE = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet',
+  'août', 'septembre', 'octobre', 'novembre', 'décembre',
+] as const;
+
+/**
+ * Calcule le mois de récolte à partir du mois de semis et de la durée du cycle en mois.
+ * Ex. semis juin (5) + 4 mois → octobre (9).
+ */
+export function getMoisRecolte(semisMois: string, cycleLengthMonths: number): string {
+  const idx = MOIS_ORDRE.findIndex((m) => m.toLowerCase() === semisMois.toLowerCase());
+  if (idx < 0) return semisMois;
+  const recolteIdx = (idx + cycleLengthMonths) % 12;
+  const mois = MOIS_ORDRE[recolteIdx];
+  return mois.charAt(0).toUpperCase() + mois.slice(1);
+}
+
 export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
   oignon: {
     name: 'Oignon',
@@ -26,7 +44,7 @@ export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
     waterNeeds: 'moyen',
     growingSeason: {
       start: 'octobre',
-      end: 'novembre',
+      cycleLengthMonths: 2,
     },
     yieldRange: {
       min: 20,
@@ -60,7 +78,7 @@ export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
     waterNeeds: 'élevé',
     growingSeason: {
       start: 'septembre',
-      end: 'novembre',
+      cycleLengthMonths: 3,
     },
     yieldRange: {
       min: 15,
@@ -95,7 +113,7 @@ export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
     waterNeeds: 'élevé',
     growingSeason: {
       start: 'juin',
-      end: 'juillet',
+      cycleLengthMonths: 4,
     },
     yieldRange: {
       min: 2,
@@ -128,7 +146,7 @@ export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
     waterNeeds: 'élevé',
     growingSeason: {
       start: 'juin',
-      end: 'juillet',
+      cycleLengthMonths: 5,
     },
     yieldRange: {
       min: 3,
@@ -162,7 +180,7 @@ export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
     waterNeeds: 'moyen',
     growingSeason: {
       start: 'juin',
-      end: 'juillet',
+      cycleLengthMonths: 4,
     },
     yieldRange: {
       min: 1,
@@ -181,3 +199,12 @@ export const PLANTS_REQUIREMENTS: Record<string, PlantRequirements> = {
 
 // Liste des cultures disponibles pour les menus déroulants
 export const AVAILABLE_CROPS = Object.keys(PLANTS_REQUIREMENTS);
+
+/** Icônes pour le sélecteur visuel (Phase 2 – inclusion) */
+export const CROP_ICONS: Record<string, string> = {
+  oignon: '🧅',
+  tomate: '🍅',
+  maïs: '🌽',
+  riz: '🍚',
+  arachide: '🥜',
+};
