@@ -34,9 +34,24 @@ Sans cette étape, les Cloud Functions qui utilisent GEE échoueront à l’auth
 
 ---
 
-## 3. Variables d’environnement (backend / Cloud Functions)
+## 3. Variables d’environnement (backend)
 
-Dans le dossier **`functions/`** (Cloud Functions) ou ton backend, configure :
+### 3.1 Backend Vercel (API `/api/getSoilFromGEE`)
+
+L’app appelle `API_URL/api/getSoilFromGEE?lat=…&lng=…`. Sur **Vercel**, le handler utilise `functions/src/geeSoilVercel.ts` et lit la clé depuis une **variable d’environnement contenant le JSON en chaîne**.
+
+Dans **Vercel** → **Settings** → **Environment Variables** :
+
+| Variable | Description |
+|----------|-------------|
+| `GEE_SERVICE_ACCOUNT_JSON` ou `COMPTE_DE_SERVICE_GEE_JSON` | Contenu complet du fichier JSON du compte de service. |
+| `GEE_PROJECT_ID` ou `ID_PROJET_GEE` | ID du projet Google Cloud. |
+
+Copier tout le contenu du fichier `.json` du compte de service comme valeur. Sans ces variables, `/api/getSoilFromGEE` renverra une erreur et l’app utilisera `DEFAULT_SOIL`.
+
+### 3.2 Backend Cloud Functions (Firebase)
+
+Dans le dossier **`functions/`** (Cloud Functions), configure :
 
 | Variable | Description | Exemple |
 |----------|-------------|---------|
@@ -75,7 +90,7 @@ La Cloud Function **`getSoilFromGEE`** interroge **SoilGrids** sur GEE pour un p
 - **Endpoint** : `GET` ou `POST` avec `?lat=12.63&lng=-7.92` (ou body `{ lat, lng }`).
 - **Réponse** : `{ ph, clay, sand, silt, organicCarbon, nitrogen, texture, ... }`.
 
-L’app mobile appelle cette **URL** (Cloud Function déployée) ; elle ne parle jamais directement à GEE.
+L’app mobile appelle cette **URL** (Cloud Function déployée) ; elle ne parle jamais directement à GEE. En déploiement Vercel, si `API_URL` est défini, le sol est chargé via `API_URL/api/getSoilFromGEE` ; sinon l’app utilise `DEFAULT_SOIL`. Voir `src/services/agronomy/soilService.ts`.
 
 ### Build et déploiement
 

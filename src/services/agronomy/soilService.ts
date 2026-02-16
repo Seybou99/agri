@@ -1,15 +1,9 @@
-// Service pour récupérer les données de sol via ISRIC SoilGrids
-// Doc : https://www.isric.org/explore/soilgrids/faq-soilgrids
-// Référence projet : docs/APIS_DONNEES.md
+// Service pour récupérer les données de sol : ISRIC SoilGrids REST ou Google Earth Engine (API Vercel).
+// Doc : https://www.isric.org/explore/soilgrids/faq-soilgrids, docs/EARTH_ENGINE_SETUP.md
 //
-// ⚠️ API REST SoilGrids (rest.isric.org) : TEMPORAIREMENT SUSPENDUE par l'ISRIC.
-// "We are currently experiencing issues... and have decided to temporarily pause the service."
-// Ne pas perdre de temps à appeler l'URL tant que la suspension n'est pas levée.
-//
-// Alternatives : Google Earth Engine (recommandé, voir docs/EARTH_ENGINE_SETUP.md)
-// ou WCS (https://maps.isric.org). En attendant : fallback sur DEFAULT_SOIL.
-//
-// Mettre à true si l'ISRIC rétablit le REST ; sinon garder false et utiliser GEE.
+// Ordre de priorité : 1) REST SoilGrids si rétabli, 2) API backend /api/getSoilFromGEE (GEE), 3) DEFAULT_SOIL.
+import { API_URL } from 'react-native-dotenv';
+
 const SOILGRIDS_REST_AVAILABLE = false;
 
 export interface SoilData {
@@ -65,16 +59,54 @@ function extractLayerValue(layer: SoilGridsLayer): number | null {
 
 const USER_AGENT = 'SeneGundo/1.0 (agri-mali; +https://github.com)';
 
+/** Base URL de l'API (Vercel) pour appeler /api/getSoilFromGEE — uniquement côté app. */
+function getApiBaseUrl(): string | null {
+  const url = typeof API_URL === 'string' && API_URL && !API_URL.includes('example.com') ? API_URL.trim() : null;
+  return url ? url.replace(/\/$/, '') : null;
+}
+
 /**
  * Récupère les données de sol pour une coordonnée donnée.
- * Tant que SOILGRIDS_REST_AVAILABLE = false (REST suspendu), retourne DEFAULT_SOIL
- * sans appel réseau. Sinon appelle rest.isric.org (Fair Use : 5 req/min).
+ * 1) Si SOILGRIDS_REST_AVAILABLE : appelle rest.isric.org.
+ * 2) Sinon : appelle l'API backend /api/getSoilFromGEE (Google Earth Engine) si API_URL est configurée.
+ * 3) Sinon : retourne DEFAULT_SOIL.
  */
 export async function fetchSoilData(lat: number, lng: number): Promise<SoilData> {
-  if (!SOILGRIDS_REST_AVAILABLE) {
-    return Promise.resolve(DEFAULT_SOIL);
+  if (SOILGRIDS_REST_AVAILABLE) {
+    return fetchSoilFromRest(lat, lng);
   }
 
+  const baseUrl = getApiBaseUrl();
+  if (baseUrl) {
+    try {
+      const url = `${baseUrl}/api/getSoilFromGEE?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data.ph === 'number') {
+          return {
+            ph: data.ph,
+            texture: data.texture ?? DEFAULT_SOIL.texture,
+            organicCarbon: data.organicCarbon ?? DEFAULT_SOIL.organicCarbon,
+            nitrogen: data.nitrogen ?? DEFAULT_SOIL.nitrogen,
+            phosphorus: data.phosphorus ?? DEFAULT_SOIL.phosphorus,
+            potassium: data.potassium ?? DEFAULT_SOIL.potassium,
+            clay: data.clay ?? DEFAULT_SOIL.clay,
+            sand: data.sand ?? DEFAULT_SOIL.sand,
+            silt: data.silt ?? DEFAULT_SOIL.silt,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('getSoilFromGEE (app):', e);
+    }
+  }
+
+  return Promise.resolve(DEFAULT_SOIL);
+}
+
+/** Appel direct REST SoilGrids (quand SOILGRIDS_REST_AVAILABLE = true). */
+async function fetchSoilFromRest(lat: number, lng: number): Promise<SoilData> {
   const baseUrl = 'https://rest.isric.org/soilgrids/v2.0/properties/query';
   const properties = ['phh2o', 'clay', 'sand'];
   const params = new URLSearchParams();
