@@ -135,17 +135,17 @@ export const WeatherDetailScreen: React.FC = () => {
     loadWeather();
   }, [location]);
 
-  // Déterminer la couleur de fond selon les conditions météo (fallback si pas d'image)
+  // Fond clair aligné avec le reste de l'app (vert / blanc)
   const getBackgroundColor = () => {
-    if (!weather) return '#87CEEB'; // Bleu ciel
+    if (!weather) return colors.background;
     const desc = weather.description.toLowerCase();
     if (desc.includes('pluie') || desc.includes('rain')) {
-      return '#B0C4DE'; // Gris bleuté pour la pluie
+      return colors.gray[100];
     }
     if (desc.includes('nuage') || desc.includes('cloud')) {
-      return '#87CEEB'; // Bleu ciel pour nuages
+      return colors.gray[50];
     }
-    return '#87CEEB'; // Bleu ciel pour ciel dégagé
+    return '#E8F5E9'; // Vert très clair (thème agricole)
   };
 
   // Gradient de fallback si pas d'image de fond
@@ -185,7 +185,7 @@ export const WeatherDetailScreen: React.FC = () => {
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M19 12H5M12 19l-7-7 7-7"
-                stroke={colors.white}
+                stroke={colors.primaryDark}
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -201,7 +201,7 @@ export const WeatherDetailScreen: React.FC = () => {
         >
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.white} />
+              <ActivityIndicator size="large" color={colors.primary} />
               <Text style={styles.loadingText}>Chargement des données météo...</Text>
             </View>
           ) : weather ? (
@@ -217,7 +217,7 @@ export const WeatherDetailScreen: React.FC = () => {
                   <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
                     <Path
                       d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                      stroke={colors.white}
+                      stroke={colors.primary}
                       strokeWidth={1.5}
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -268,7 +268,7 @@ export const WeatherDetailScreen: React.FC = () => {
             <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                stroke={colors.white}
+                stroke={colors.primaryDark}
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -279,7 +279,7 @@ export const WeatherDetailScreen: React.FC = () => {
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke={colors.white}
+                stroke={colors.primaryDark}
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -295,7 +295,7 @@ export const WeatherDetailScreen: React.FC = () => {
             <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-                stroke={colors.white}
+                stroke={colors.primaryDark}
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -312,7 +312,7 @@ export const WeatherDetailScreen: React.FC = () => {
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                    stroke={colors.white}
+                    stroke={colors.primaryDark}
                     strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -323,7 +323,7 @@ export const WeatherDetailScreen: React.FC = () => {
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                    stroke={colors.white}
+                    stroke={colors.primaryDark}
                     strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -339,7 +339,7 @@ export const WeatherDetailScreen: React.FC = () => {
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-                    stroke={colors.white}
+                    stroke={colors.primaryDark}
                     strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -386,9 +386,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: colors.white,
+    color: colors.text.primary,
     marginTop: spacing.md,
-    opacity: 0.9,
   },
   locationHeader: {
     paddingHorizontal: spacing.lg,
@@ -402,25 +401,19 @@ const styles = StyleSheet.create({
   },
   locationLabel: {
     ...typography.caption,
-    color: colors.white,
+    color: colors.primaryDark,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1,
     marginLeft: spacing.xs / 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   locationName: {
     ...typography.h1,
-    color: colors.white,
+    color: colors.text.primary,
     fontWeight: '700',
     fontSize: 36,
     marginBottom: spacing.sm,
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   currentWeather: {
     flexDirection: 'row',
@@ -428,34 +421,24 @@ const styles = StyleSheet.create({
   },
   temperature: {
     ...typography.h1,
-    color: colors.white,
+    color: colors.primaryDark,
     fontWeight: '700',
     fontSize: 42,
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   separator: {
     ...typography.h3,
-    color: colors.white,
-    opacity: 0.6,
+    color: colors.text.secondary,
     marginHorizontal: spacing.md,
     fontSize: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   condition: {
     ...typography.h4,
-    color: colors.white,
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   mockBanner: {
-    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+    backgroundColor: 'rgba(255, 152, 0, 0.15)',
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     padding: spacing.md,
@@ -465,7 +448,7 @@ const styles = StyleSheet.create({
   },
   mockBannerText: {
     ...typography.bodySmall,
-    color: colors.white,
+    color: colors.text.primary,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -481,15 +464,14 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     ...typography.h3,
-    color: colors.white,
+    color: colors.text.primary,
     marginBottom: spacing.sm,
     fontWeight: '600',
   },
   errorText: {
     ...typography.body,
-    color: colors.white,
+    color: colors.text.secondary,
     textAlign: 'center',
-    opacity: 0.8,
   },
   bottomNav: {
     position: 'absolute',
@@ -500,16 +482,15 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     overflow: 'hidden',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: colors.gray[200],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 8,
-    // Pour Android : fond semi-transparent (BlurView gère iOS)
     ...Platform.select({
       android: {
-        backgroundColor: 'rgba(255, 255, 255, 0.35)',
+        backgroundColor: colors.white,
       },
     }),
   },
@@ -534,12 +515,12 @@ const styles = StyleSheet.create({
   navButtonActive: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: colors.primary,
   },
   navDots: {
     flexDirection: 'row',
@@ -550,7 +531,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: colors.white,
+    backgroundColor: colors.primaryDark,
     opacity: 0.9,
   },
 });

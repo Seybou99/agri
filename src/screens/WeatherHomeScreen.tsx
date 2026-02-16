@@ -22,6 +22,7 @@ import {
   fetchAirQuality,
 } from '@services/weather/weatherService';
 import { useAuth } from '@hooks/useAuth';
+import { colors } from '@theme';
 import type { CurrentWeather, HourlyForecast, AirQuality } from '../types/weather';
 import type { AppNavigationProp, RootStackParamList } from '@navigation/AppNavigator';
 
@@ -131,7 +132,7 @@ export const WeatherHomeScreen: React.FC = () => {
       >
         {/* Carte principale météo */}
         <LinearGradient
-          colors={['#60A5FA', '#3B82F6']}
+          colors={[colors.primaryLight, colors.primary]}
           style={styles.mainCard}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -142,7 +143,7 @@ export const WeatherHomeScreen: React.FC = () => {
               style={styles.iconButton}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.iconText}>☰</Text>
+              <Text style={styles.iconText}>←</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.iconButton}
@@ -266,72 +267,73 @@ export const WeatherHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
   },
   mainCard: {
-    borderRadius: 32,
-    padding: 24,
-    marginBottom: 24,
-    minHeight: 500,
+    borderRadius: 24,
+    padding: 18,
+    marginTop: 30,
+    marginBottom: 20,
+    minHeight: 280,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconText: {
-    fontSize: 20,
-    color: '#FFFFFF',
+    fontSize: 18,
+    color: colors.white,
   },
   cityName: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.white,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   condition: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   mainTemp: {
-    fontSize: 96,
+    fontSize: 56,
     fontWeight: '200',
-    color: '#FFFFFF',
+    color: colors.white,
     textAlign: 'center',
-    letterSpacing: -4,
+    letterSpacing: -2,
   },
   weatherIconContainer: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 8,
   },
   weatherIconLarge: {
-    fontSize: 120,
+    fontSize: 64,
   },
   indicators: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
+    marginTop: 12,
   },
   indicator: {
     alignItems: 'center',
@@ -343,12 +345,12 @@ const styles = StyleSheet.create({
   indicatorValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.white,
     marginBottom: 4,
   },
   indicatorLabel: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.white,
   },
   todaySection: {
     marginBottom: 24,
@@ -362,33 +364,36 @@ const styles = StyleSheet.create({
   todayTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   next7DaysLink: {
     fontSize: 14,
-    color: '#60A5FA',
+    color: colors.primary,
     fontWeight: '500',
   },
   hourlyScroll: {
     gap: 12,
   },
   hourlyCard: {
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',
     width: 80,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
   },
   hourlyCardHighlighted: {
-    backgroundColor: '#60A5FA',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
   },
   hourlyTime: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.text.secondary,
     marginBottom: 12,
   },
   hourlyTimeHighlighted: {
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   hourlyIcon: {
     fontSize: 32,
@@ -397,10 +402,10 @@ const styles = StyleSheet.create({
   hourlyTemp: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   hourlyTempHighlighted: {
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   airQualitySection: {
     marginBottom: 24,
@@ -414,26 +419,28 @@ const styles = StyleSheet.create({
   airQualityTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   viewReportLink: {
     fontSize: 14,
-    color: '#60A5FA',
+    color: colors.primary,
     fontWeight: '500',
   },
   airQualityCard: {
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray[200],
   },
   airQualityCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
     borderWidth: 3,
-    borderColor: '#60A5FA',
+    borderColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -441,7 +448,7 @@ const styles = StyleSheet.create({
   airQualityIndex: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   airQualityInfo: {
     flex: 1,
@@ -449,17 +456,17 @@ const styles = StyleSheet.create({
   airQualityLevel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   airQualityDescription: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.text.secondary,
     marginBottom: 4,
     lineHeight: 18,
   },
   airQualityDetails: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: colors.text.secondary,
   },
 });

@@ -18,14 +18,10 @@ const WEATHER_BASE = `${BASE_URL}/weather`;
 const FORECAST_BASE = `${BASE_URL}/forecast`;
 const AIR_QUALITY_BASE = `${BASE_URL}/air_pollution`;
 
-/**
- * Formater l'heure en format "09 AM", "10 AM", etc.
- */
+/** Formater l'heure en format 24h (ex. "09 h", "14 h"). */
 const formatHour = (date: Date): string => {
   const hours = date.getHours();
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHour = hours % 12 || 12;
-  return `${displayHour.toString().padStart(2, '0')} ${period}`;
+  return `${hours.toString().padStart(2, '0')} h`;
 };
 
 /**

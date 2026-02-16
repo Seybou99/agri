@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { fetch7DayForecast } from '@services/weather/weatherService';
 import { useAuth } from '@hooks/useAuth';
+import { colors } from '@theme';
 import type { DailyForecast } from '../types/weather';
 import type { AppNavigationProp, RootStackParamList } from '@navigation/AppNavigator';
 
@@ -103,7 +104,7 @@ export const Next7DaysScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#60A5FA" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -113,7 +114,7 @@ export const Next7DaysScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -137,10 +138,10 @@ export const Next7DaysScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Carte Tomorrow avec gradient - Layout horizontal */}
+        {/* Carte Demain - gradient vert */}
         {tomorrowForecast && (
           <LinearGradient
-            colors={['#60A5FA', '#3B82F6']}
+            colors={[colors.primaryLight, colors.primary]}
             style={styles.tomorrowCard}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
@@ -206,13 +207,13 @@ export const Next7DaysScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1F1F1F',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1F1F1F',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -226,30 +227,34 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
     fontSize: 24,
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   menuButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
   },
   menuIcon: {
     fontSize: 24,
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   scrollContent: {
     padding: 20,
@@ -282,19 +287,19 @@ const styles = StyleSheet.create({
   },
   tomorrowLabel: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: 4,
   },
   tomorrowCondition: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.white,
     marginBottom: 8,
   },
   tomorrowTemp: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.white,
   },
   tomorrowIndicators: {
     flexDirection: 'column',
@@ -310,27 +315,29 @@ const styles = StyleSheet.create({
   tomorrowIndicatorValue: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.white,
   },
   tomorrowIndicatorLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   weekList: {
     gap: 16,
   },
   dayRow: {
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray[200],
   },
   dayName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     width: 100,
   },
   dayWeather: {
@@ -344,11 +351,11 @@ const styles = StyleSheet.create({
   },
   dayCondition: {
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.text.secondary,
   },
   dayTemp: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
 });

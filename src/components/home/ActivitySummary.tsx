@@ -89,7 +89,7 @@ export const ActivitySummary: React.FC<ActivitySummaryProps> = ({
         activeOpacity={0.8}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Résumé de mon activité</Text>
+          <Text style={styles.cardTitle}>Résumér de mon activité</Text>
         </View>
         <Text style={styles.cardSubtitle}>
           {lastDiagnostic.crop} à {lastDiagnostic.location}
@@ -98,7 +98,7 @@ export const ActivitySummary: React.FC<ActivitySummaryProps> = ({
           <Text style={styles.aptitudeValue}>{lastDiagnostic.aptitude}%</Text>
           <Text style={styles.aptitudeLabel}>Hectares d'aptitude</Text>
         </View>
-        <View style={styles.chartContainer}>
+        {/* <View style={styles.chartContainer}>
           <Svg width={60} height={30} viewBox="0 0 60 30">
             <Path
               d="M 5 25 L 15 20 L 25 15 L 35 10 L 45 8 L 55 5"
@@ -108,7 +108,7 @@ export const ActivitySummary: React.FC<ActivitySummaryProps> = ({
             />
             <Circle cx="55" cy="5" r="3" fill={colors.primaryDark} />
           </Svg>
-        </View>
+        </View> */}
       </TouchableOpacity>
 
       {/* Bouton pour voir la météo complète */}

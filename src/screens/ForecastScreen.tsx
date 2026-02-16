@@ -24,6 +24,7 @@ import {
   fetchCurrentWeather,
 } from '@services/weather/weatherService';
 import { useAuth } from '@hooks/useAuth';
+import { colors } from '@theme';
 import type { TemperatureDataPoint, PopularCity, CurrentWeather } from '../types/weather';
 import type { AppNavigationProp, RootStackParamList } from '@navigation/AppNavigator';
 
@@ -151,7 +152,7 @@ export const ForecastScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#60A5FA" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -161,7 +162,7 @@ export const ForecastScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -180,7 +181,7 @@ export const ForecastScreen: React.FC = () => {
       >
         {/* Header card avec ville */}
         <LinearGradient
-          colors={['#60A5FA', '#3B82F6']}
+          colors={[colors.primaryLight, colors.primary]}
           style={styles.cityCard}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -212,7 +213,7 @@ export const ForecastScreen: React.FC = () => {
           <View style={styles.chartContainer}>
             {/* Timeline en haut */}
             <View style={styles.timeline}>
-              {['09AM', '12PM', '15PM', '18PM', '21PM', '12AM'].map((time, index) => (
+              {['09h', '12h', '15h', '18h', '21h', '00h'].map((time, index) => (
                 <Text key={index} style={styles.timeLabel}>{time}</Text>
               ))}
             </View>
@@ -228,7 +229,7 @@ export const ForecastScreen: React.FC = () => {
                     y1={i * (CHART_HEIGHT / 3)}
                     x2={CHART_WIDTH}
                     y2={i * (CHART_HEIGHT / 3)}
-                    stroke="rgba(255, 255, 255, 0.1)"
+                    stroke={colors.gray[200]}
                     strokeWidth="1"
                   />
                 ))}
@@ -236,7 +237,7 @@ export const ForecastScreen: React.FC = () => {
                 {/* Courbe de température */}
                 <Path
                   d={path}
-                  stroke="#60A5FA"
+                  stroke={colors.primary}
                   strokeWidth="3"
                   fill="none"
                 />
@@ -248,7 +249,7 @@ export const ForecastScreen: React.FC = () => {
                       cx={point.x}
                       cy={point.y}
                       r="6"
-                      fill="#60A5FA"
+                      fill={colors.primary}
                     />
                     {index === 1 && (
                       <>
@@ -256,12 +257,12 @@ export const ForecastScreen: React.FC = () => {
                           cx={point.x}
                           cy={point.y}
                           r="16"
-                          fill="#60A5FA"
+                          fill={colors.primary}
                         />
                         <SvgText
                           x={point.x}
                           y={point.y + 5}
-                          fill="#FFFFFF"
+                          fill={colors.primaryDark}
                           fontSize="12"
                           fontWeight="600"
                           textAnchor="middle"
@@ -314,13 +315,13 @@ export const ForecastScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1F1F1F',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1F1F1F',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -334,30 +335,34 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
     fontSize: 24,
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   menuButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
   },
   menuIcon: {
     fontSize: 24,
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
   scrollContent: {
     padding: 20,
@@ -373,7 +378,7 @@ const styles = StyleSheet.create({
   },
   cityDate: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   cityRow: {
     flexDirection: 'row',
@@ -386,13 +391,13 @@ const styles = StyleSheet.create({
   cityName: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.white,
     flex: 1,
   },
   mapButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -403,7 +408,7 @@ const styles = StyleSheet.create({
   },
   mapText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '500',
   },
   chartSection: {
@@ -418,17 +423,19 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   viewReportLink: {
     fontSize: 14,
-    color: '#60A5FA',
+    color: colors.primary,
     fontWeight: '500',
   },
   chartContainer: {
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: 20,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
   },
   timeline: {
     flexDirection: 'row',
@@ -438,7 +445,7 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: colors.text.secondary,
   },
   chart: {
     marginVertical: 20,
@@ -451,7 +458,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.text.primary,
     fontWeight: '500',
   },
   citiesSection: {
@@ -466,21 +473,23 @@ const styles = StyleSheet.create({
   citiesTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   viewAllLink: {
     fontSize: 14,
-    color: '#60A5FA',
+    color: colors.primary,
     fontWeight: '500',
   },
   cityCard2: {
-    backgroundColor: '#2D2D2D',
+    backgroundColor: colors.white,
     borderRadius: 20,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
   },
   cityWeather: {
     flexDirection: 'row',
@@ -496,15 +505,15 @@ const styles = StyleSheet.create({
   cityName2: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   cityCondition: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.text.secondary,
   },
   cityTemp: {
     fontSize: 40,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: colors.primaryDark,
   },
 });

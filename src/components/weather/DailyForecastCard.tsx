@@ -38,7 +38,6 @@ export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({ forecasts 
 
   return (
     <CardWrapper {...cardProps} style={styles.card}>
-      <View style={styles.overlay} />
       <View style={styles.header}>
         <Text style={styles.headerText}>PRÉVISIONS SUR 10 JOURS</Text>
         <Text style={styles.calendarIcon}>📅</Text>
@@ -95,26 +94,22 @@ export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({ forecasts 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: colors.white,
     borderRadius: 28,
     padding: spacing.xl,
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: colors.gray[200],
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 6,
-    // Overlay sombre pour améliorer le contraste
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
     overflow: 'hidden',
-    // Pour Android : fond semi-transparent (BlurView gère iOS)
     ...Platform.select({
-      android: {
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-      },
+      android: { backgroundColor: colors.white },
     }),
   },
   header: {
@@ -123,20 +118,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.lg,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    borderRadius: 28,
-  },
   headerText: {
     ...typography.bodySmall,
-    color: colors.white,
+    color: colors.primaryDark,
     fontWeight: '700',
     fontSize: 10,
     letterSpacing: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   calendarIcon: {
     fontSize: 18,
@@ -153,13 +140,10 @@ const styles = StyleSheet.create({
   },
   dayName: {
     ...typography.bodySmall,
-    color: colors.white,
+    color: colors.text.primary,
     fontWeight: '600',
     marginBottom: spacing.xs,
     fontSize: 14,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   weatherIcon: {
     fontSize: 22,
@@ -167,12 +151,9 @@ const styles = StyleSheet.create({
   },
   precipitation: {
     ...typography.caption,
-    color: '#4A90E2',
+    color: colors.primary,
     fontSize: 10,
     fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   temperatureBarContainer: {
     flex: 1,
@@ -180,28 +161,27 @@ const styles = StyleSheet.create({
   },
   temperatureBar: {
     height: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: colors.gray[200],
     borderRadius: 3,
     position: 'relative',
   },
   temperatureBarFill: {
     position: 'absolute',
     height: '100%',
-    backgroundColor: '#87CEEB',
+    backgroundColor: colors.primaryLight,
     borderRadius: 3,
-    opacity: 0.8,
   },
   temperatureDot: {
     position: 'absolute',
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: colors.white,
+    backgroundColor: colors.primary,
     top: -1,
     marginLeft: -3.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 2,
   },
@@ -214,20 +194,14 @@ const styles = StyleSheet.create({
   },
   tempMin: {
     ...typography.bodySmall,
-    color: colors.white,
+    color: colors.text.secondary,
     fontSize: 14,
     fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   tempMax: {
     ...typography.bodySmall,
-    color: colors.white,
+    color: colors.text.primary,
     fontWeight: '700',
     fontSize: 14,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
 });

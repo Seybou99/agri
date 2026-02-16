@@ -166,7 +166,7 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({ data }) => {
         
         {/* Labels des heures en haut */}
         <View style={styles.timeLabels}>
-          {['09 AM', '12 PM', '15 PM', '18 PM', '21 PM', '12 AM'].map((time, index) => (
+          {['09h', '12h', '15h', '18h', '21h', '00h'].map((time, index) => (
             <Text key={index} style={styles.timeLabel}>
               {time}
             </Text>
