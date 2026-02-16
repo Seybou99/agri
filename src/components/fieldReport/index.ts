@@ -6,4 +6,4 @@ export * from './GrowthChart';
 export * from './AnalysisSection';
 export * from './NotesSection';
 export * from './ScheduleSection';
-export * from './CalendarGuideSection';
+export { CalendarGuideSection } from './CalendarGuideSection';

@@ -66,6 +66,8 @@ export async function fetchClimateData(lat: number, lng: number): Promise<Climat
     const tempAvgValues = Object.values(tempAvg) as number[];
 
     const FILL = -999;
+    const TEMP_MIN_VALID = -50;
+    const TEMP_MAX_VALID = 60;
     const validPrecip = precipValues
       .map((v) => Number(v))
       .filter((n) => !Number.isNaN(n) && n !== FILL && n >= 0);
@@ -77,10 +79,14 @@ export async function fetchClimateData(lat: number, lng: number): Promise<Climat
       tempAvgValues.length ?
         tempAvgValues.reduce((s, v) => s + (Number(v) || 0), 0) / tempAvgValues.length
       : DEFAULT_CLIMATE.averageTemperature;
-    const validMin = tempMinValues.filter((v) => v != null && !Number.isNaN(Number(v)));
-    const validMax = tempMaxValues.filter((v) => v != null && !Number.isNaN(Number(v)));
-    const minTemp = validMin.length ? Math.min(...validMin.map(Number)) : DEFAULT_CLIMATE.temperatureRange.min;
-    const maxTemp = validMax.length ? Math.max(...validMax.map(Number)) : DEFAULT_CLIMATE.temperatureRange.max;
+    const validMin = tempMinValues
+      .map((v) => Number(v))
+      .filter((n) => !Number.isNaN(n) && n !== FILL && n >= TEMP_MIN_VALID && n <= TEMP_MAX_VALID);
+    const validMax = tempMaxValues
+      .map((v) => Number(v))
+      .filter((n) => !Number.isNaN(n) && n !== FILL && n >= TEMP_MIN_VALID && n <= TEMP_MAX_VALID);
+    const minTemp = validMin.length ? Math.min(...validMin) : DEFAULT_CLIMATE.temperatureRange.min;
+    const maxTemp = validMax.length ? Math.max(...validMax) : DEFAULT_CLIMATE.temperatureRange.max;
 
     const precipNums = precipValues.map((v) => {
       const n = Number(v);

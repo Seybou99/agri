@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing, typography } from '@theme';
 
-const TABS = ['Overview', 'Analysis', 'Notes', 'Calendrier'] as const;
+const TABS = ['Résumé', 'Analyse', 'Notes', 'Calendrier'] as const;
 
 export type ReportTabId = (typeof TABS)[number];
 

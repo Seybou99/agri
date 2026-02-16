@@ -136,7 +136,10 @@ export const AnalysisSection: React.FC<AnalysisSectionProps> = ({
     <View style={[styles.container, style]}>
       <Text style={styles.title}>Cultures idéales pour la zone</Text>
       <Text style={styles.subtitle}>
-        Proposition selon pH, humidité, nutriments et pluviométrie.
+        Classement par score d'aptitude (0–10) selon le sol et le climat de la zone sélectionnée.
+      </Text>
+      <Text style={styles.criteria}>
+        Critères : sol (pH, texture, nutriments) 40 % · climat (températures) 40 % · eau (pluviométrie) 20 %.
       </Text>
 
       {idealCrops.map(({ key, name, result }) => (
@@ -195,7 +198,13 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.caption.fontSize,
     color: colors.text.secondary,
+    marginBottom: spacing.xs,
+  },
+  criteria: {
+    fontSize: typography.bodySmall.fontSize,
+    color: colors.text.secondary,
     marginBottom: spacing.lg,
+    fontStyle: 'italic',
   },
   card: {
     backgroundColor: colors.white,

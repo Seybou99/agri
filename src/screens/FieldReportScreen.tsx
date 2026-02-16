@@ -13,19 +13,19 @@ import {
   YieldCard,
   GrowthChart,
   NotesSection,
-  CalendarGuideSection,
 } from '@components/fieldReport';
 import { AnalysisSection } from '@components/fieldReport/AnalysisSection';
+import { CalendarGuideSection } from '@components/fieldReport/CalendarGuideSection';
 import type { ReportTabId } from '@components/fieldReport';
 import type { GrowthPeriod } from '@components/fieldReport';
 import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
 import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
-import { useRecommendationsFromApi } from '@hooks/useRecommendationsFromApi';
-import { useProfitabilityFromApi } from '@hooks/useProfitabilityFromApi';
-import { useCalendarGuideData } from '@hooks/useCalendarGuideData';
-import { useAgroData } from '@hooks/useAgroData';
+import { useRecommendationsFromApi } from '../hooks/useRecommendationsFromApi';
+import { useProfitabilityFromApi } from '../hooks/useProfitabilityFromApi';
+import { useCalendarGuideData } from '../hooks/useCalendarGuideData';
+import { useAgroData } from '../hooks/useAgroData';
 import { API_URL } from 'react-native-dotenv';
 
 const MOCK_PARCEL_DEFAULT = {
@@ -147,7 +147,7 @@ export const FieldReportScreen: React.FC = () => {
   const navigation = useNavigation<AppNavigationProp>();
   const route = useRoute();
   const params = route.params as FieldReportParams | undefined;
-  const [activeTab, setActiveTab] = useState<ReportTabId>('Overview');
+  const [activeTab, setActiveTab] = useState<ReportTabId>('Résumé');
   const [growthPeriod, setGrowthPeriod] = useState<GrowthPeriod>('M');
   const [exportingPdf, setExportingPdf] = useState(false);
 
@@ -280,7 +280,7 @@ export const FieldReportScreen: React.FC = () => {
 
   const insets = useSafeAreaInsets();
   const hasCoords = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
-  const showOverview = activeTab === 'Overview';
+  const showOverview = activeTab === 'Résumé';
   const showOverviewContent = showOverview && !loading && (!hasCoords || !error);
 
   return (
@@ -394,7 +394,7 @@ export const FieldReportScreen: React.FC = () => {
           </>
         )}
 
-        {activeTab === 'Analysis' && !loading && (
+        {activeTab === 'Analyse' && !loading && (
           <AnalysisSection
             idealCrops={idealCrops}
             otherCrops={otherCrops}

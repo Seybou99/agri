@@ -6,6 +6,25 @@ import { SoilData } from './soilService';
 import { ClimateData } from './climateService';
 import { DiagnosticResults, SuitabilityLevel } from '@models/Diagnostic';
 
+/** Heure et méthode d'arrosage recommandées par culture (pour les Notes). */
+const IRRIGATION_ADVICE: Record<string, { time: string; method: string }> = {
+  Oignon: { time: 'Tôt le matin (6h–9h) ou en fin de journée (17h–19h)', method: 'Goutte-à-goutte ou goutteurs au pied ; éviter de mouiller le feuillage pour limiter les maladies.' },
+  Tomate: { time: 'Matin (6h–10h) ou soir (17h–19h)', method: 'Goutte-à-goutte de préférence ; aspersion légère possible en refroidissement, sans mouiller le feuillage.' },
+  Maïs: { time: 'Tôt le matin (5h–9h) ; critique au stade floraison–grain laiteux', method: 'Goutte-à-goutte ou sillons ; éviter l\'aspersion en plein soleil.' },
+  Riz: { time: 'Gestion du niveau d\'eau en continu ; renouvellement matin ou soir en cas de refroidissement', method: 'Inondation contrôlée ou bassin ; éviter les à-coups de niveau.' },
+  Arachide: { time: 'Matin (6h–9h) ou fin d\'après-midi (16h–18h)', method: 'Goutte-à-goutte ou arrosage au pied ; sol bien drainant, pas d\'eau stagnante.' },
+  Coton: { time: 'Tôt le matin (5h–9h) ou soir (17h–19h)', method: 'Goutte-à-goutte ou sillons ; irrigation régulière en floraison et ouverture des capsules.' },
+  Gombo: { time: 'Matin (6h–9h) ou soir (17h–19h)', method: 'Goutte-à-goutte ou arrosage au pied ; sol maintenu frais sans excès.' },
+  Poivron: { time: 'Matin (6h–10h) ou fin d\'après-midi (16h–18h)', method: 'Goutte-à-goutte recommandé ; éviter de mouiller les feuilles pour limiter mildiou.' },
+};
+
+function addIrrigationAdvice(plant: PlantRequirements, recommendations: string[]): void {
+  const advice = IRRIGATION_ADVICE[plant.name];
+  if (!advice) return;
+  const line = `Pour ${plant.name} : ${advice.time}. ${advice.method}`;
+  if (!recommendations.includes(line)) recommendations.push(line);
+}
+
 export interface MatchingResult {
   score: number; // Score de 0 à 10
   suitability: SuitabilityLevel;
@@ -139,12 +158,14 @@ function calculateClimateScore(
     score -= 1.5;
     alerts.push(`Risque de stress thermique (températures jusqu'à ${climate.temperatureRange.max}°C)`);
     recommendations.push('Prévoir une irrigation de refroidissement ou ombrage');
+    addIrrigationAdvice(plant, recommendations);
   }
   
-  // Vérifier la température nocturne (si spécifiée)
-  if (plant.climate.tempIdealNight) {
-    const nightTemp = climate.temperatureRange.min;
-    if (nightTemp < plant.climate.tempIdealNight.min || 
+  // Vérifier la température nocturne (si spécifiée et donnée valide : pas de valeur manquante type -999)
+  const nightTemp = climate.temperatureRange.min;
+  const isNightTempValid = nightTemp > -100 && nightTemp < 60 && Number.isFinite(nightTemp);
+  if (plant.climate.tempIdealNight && isNightTempValid) {
+    if (nightTemp < plant.climate.tempIdealNight.min ||
         nightTemp > plant.climate.tempIdealNight.max) {
       score -= 1;
       alerts.push(`Température nocturne (${nightTemp}°C) non optimale pour la bulbaison/floraison`);
@@ -177,6 +198,7 @@ function calculateWaterScore(
     score -= (deficit / plant.climate.rainfallMin) * 5;
     alerts.push(`Pluviométrie insuffisante (${climate.annualRainfall}mm/an, minimum requis: ${plant.climate.rainfallMin}mm)`);
     recommendations.push('Irrigation complémentaire obligatoire');
+    addIrrigationAdvice(plant, recommendations);
   } else if (plant.climate.rainfallMax && climate.annualRainfall > plant.climate.rainfallMax) {
     score -= 1;
     alerts.push(`Pluviométrie élevée (${climate.annualRainfall}mm/an), risque d'excès d'eau`);
@@ -187,6 +209,7 @@ function calculateWaterScore(
   if (plant.waterNeeds === 'élevé' && climate.annualRainfall < plant.climate.rainfallMin * 1.2) {
     score -= 1;
     recommendations.push('Irrigation régulière nécessaire pendant la croissance');
+    addIrrigationAdvice(plant, recommendations);
   }
   
   return Math.max(0, Math.min(10, score));
