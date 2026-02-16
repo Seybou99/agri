@@ -25,6 +25,7 @@ import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
 import { useRecommendationsFromApi } from '@hooks/useRecommendationsFromApi';
 import { useProfitabilityFromApi } from '@hooks/useProfitabilityFromApi';
 import { useCalendarGuideData } from '@hooks/useCalendarGuideData';
+import { useAgroData } from '@hooks/useAgroData';
 import { API_URL } from 'react-native-dotenv';
 
 const MOCK_PARCEL_DEFAULT = {
@@ -46,7 +47,11 @@ type FieldReportParams = {
   locationName?: string;
 };
 
-function buildKpis(soil: { ph: number; organicCarbon: number; nitrogen: number; phosphorus: number; potassium: number } | null, climate: { averageTemperature: number; annualRainfall: number } | null): KPICardData[] {
+function buildKpis(
+  soil: { ph: number; organicCarbon: number; nitrogen: number; phosphorus: number; potassium: number } | null,
+  climate: { averageTemperature: number; annualRainfall: number } | null,
+  agroData?: { humidity?: number; temp?: number } | null
+): KPICardData[] {
   const ph = soil?.ph ?? 6.5;
   const temp = climate?.averageTemperature ?? 28;
   const rainRaw = climate?.annualRainfall ?? 800;
@@ -54,6 +59,14 @@ function buildKpis(soil: { ph: number; organicCarbon: number; nitrogen: number; 
   let humidityLabel = 'Modérée';
   if (rain < 500) humidityLabel = 'Faible';
   else if (rain > 1000) humidityLabel = 'Élevée';
+  const moistureValue =
+    agroData?.humidity != null
+      ? `${humidityLabel} • ${agroData.humidity} % (Agro)`
+      : humidityLabel;
+  const tempValue =
+    agroData?.temp != null
+      ? `${temp} °C • ${agroData.temp} °C (Agro)`
+      : `${temp} °C`;
   const n = soil?.nitrogen ?? 0.5;
   const oc = soil?.organicCarbon ?? 1;
   let nutrientsLabel = 'Moyen';
@@ -61,8 +74,8 @@ function buildKpis(soil: { ph: number; organicCarbon: number; nitrogen: number; 
   else if (oc > 1.5 && n > 0.8) nutrientsLabel = 'Élevé';
 
   return [
-    { id: 'moisture', label: 'Humidité', value: humidityLabel, icon: '💧' },
-    { id: 'temp', label: 'Température', value: `${temp} °C`, icon: '🌡️' },
+    { id: 'moisture', label: 'Humidité', value: moistureValue, icon: '💧' },
+    { id: 'temp', label: 'Température', value: tempValue, icon: '🌡️' },
     { id: 'ph', label: 'pH', value: ph.toFixed(1).replace('.', ','), icon: 'pH' },
     { id: 'nutrients', label: 'Nutriments', value: nutrientsLabel, icon: '🍃' },
   ];
@@ -148,6 +161,7 @@ export const FieldReportScreen: React.FC = () => {
   });
   const { byCulture: profitabilityByCulture } = useProfitabilityFromApi(crops);
   const calendarGuideData = useCalendarGuideData();
+  const agroData = useAgroData(lat, lng);
 
   const parcel = useMemo(() => {
     if (!params?.parcelId && !crops.length) return MOCK_PARCEL_DEFAULT;
@@ -162,7 +176,11 @@ export const FieldReportScreen: React.FC = () => {
     };
   }, [params?.parcelId, params?.locationName, params?.surface, crops]);
 
-  const kpis = useMemo(() => buildKpis(soil, climate), [soil, climate]);
+  const kpis = useMemo(
+    () =>
+      buildKpis(soil, climate, agroData.weather ? { humidity: agroData.weather.humidity, temp: agroData.weather.temp } : null),
+    [soil, climate, agroData.weather]
+  );
   const yieldData = useMemo(
     () => buildYieldFromReport(parcel, crops, matchingByCrop),
     [parcel, crops, matchingByCrop]
@@ -306,6 +324,28 @@ export const FieldReportScreen: React.FC = () => {
               data={yieldData}
               onAction={() => {}}
             />
+            {agroData.available && (agroData.weather || agroData.loading) && (
+              <View style={styles.agroCard}>
+                <Text style={styles.agroTitle}>🌾 Surveillance Agro (AgroMonitoring)</Text>
+                <Text style={styles.agroSubtitle}>Météo et données parcelle (API OpenWeather Agro)</Text>
+                {agroData.loading && !agroData.weather ? (
+                  <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: spacing.sm }} />
+                ) : agroData.weather ? (
+                  <View style={styles.agroWeatherRow}>
+                    <Text style={styles.agroTemp}>{agroData.weather.temp} °C</Text>
+                    <Text style={styles.agroDesc}>{agroData.weather.description}</Text>
+                    <View style={styles.agroMeta}>
+                      <Text style={styles.agroMetaText}>Humidité {agroData.weather.humidity} %</Text>
+                      <Text style={styles.agroMetaText}>Vent {agroData.weather.windSpeed.toFixed(1)} m/s</Text>
+                      <Text style={styles.agroMetaText}>Pression {agroData.weather.pressure} hPa</Text>
+                    </View>
+                  </View>
+                ) : null}
+                {agroData.error ? (
+                  <Text style={styles.agroError}>{agroData.error}</Text>
+                ) : null}
+              </View>
+            )}
             {apiRecommendations.length > 0 && (
               <View style={styles.apiRecoCard}>
                 <Text style={styles.apiRecoTitle}>Cultures recommandées (selon sol et climat)</Text>
@@ -426,6 +466,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.white,
   },
+  agroCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  agroTitle: {
+    fontSize: typography.h4.fontSize,
+    fontWeight: typography.h4.fontWeight,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  agroSubtitle: {
+    fontSize: typography.caption.fontSize,
+    color: colors.text.secondary,
+    marginBottom: spacing.sm,
+  },
+  agroWeatherRow: { gap: spacing.xs },
+  agroTemp: { fontSize: 24, fontWeight: '700', color: colors.primary },
+  agroDesc: { fontSize: typography.body.fontSize, color: colors.text.primary, textTransform: 'capitalize' },
+  agroMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  agroMetaText: { fontSize: typography.caption.fontSize, color: colors.text.secondary },
+  agroError: { fontSize: typography.caption.fontSize, color: colors.error, marginTop: spacing.xs },
   apiRecoCard: {
     backgroundColor: colors.white,
     borderRadius: 12,

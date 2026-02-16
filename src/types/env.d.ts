@@ -15,6 +15,8 @@ declare module 'react-native-dotenv' {
   
   // APIs externes
   export const OPENWEATHER_API_KEY: string;
+  /** Clé API AgroMonitoring (surveillance agricole, NDVI, météo parcelle) — https://home.agromonitoring.com */
+  export const AGROMONITORING_API_KEY: string;
   export const GOOGLE_MAPS_API_KEY: string;
 
   // Google Earth Engine (backend / Cloud Functions)
