@@ -1,7 +1,8 @@
 /**
  * Handler unique pour rester sous la limite de 12 fonctions (plan Hobby Vercel).
  * Routes : GET /api/v1/cultures, GET /api/v1/cultures/:id, GET /api/v1/calendar,
- *         GET /api/v1/profitability, GET /api/v1/icons, POST /api/v1/recommendations.
+ *         GET /api/v1/profitability, GET /api/v1/icons, POST /api/v1/recommendations,
+ *         POST /api/v1/plantnet/diseases.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -14,6 +15,7 @@ import {
   filterCultures,
   getCultureById,
 } from '../data/cultures';
+import { handlePlantDiseaseIdentify } from '../lib/plantDiseaseIdentify';
 
 function simpleScore(
   solType: string | undefined,
@@ -110,6 +112,12 @@ export default async function handler(
   // GET /api/v1/icons
   if (segment === 'icons' && req.method === 'GET') {
     return res.status(200).json({ data: ICONS });
+  }
+
+  // POST /api/v1/plantnet/diseases — maladies (Pl@ntNet → Kindwise si quota)
+  if (segment === 'plantnet' && segment2 === 'diseases') {
+    await handlePlantDiseaseIdentify(req, res);
+    return;
   }
 
   // POST /api/v1/recommendations (et GET pour compat)

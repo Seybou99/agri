@@ -17,12 +17,24 @@ import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
 import { useAuth } from '@hooks/useAuth';
+import { useCart } from '@contexts/CartContext';
+import { useAcademy } from '@contexts/AcademyContext';
+import { useMarketplace } from '@contexts/MarketplaceContext';
+import { canSellOnMarketplace } from '@constants/marketplaceRoles';
+import { USER_ROLE_LABELS } from '@constants/userRoles';
 import { colors, spacing, typography } from '@theme';
 import { Button } from '@components/common';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<AppNavigationProp>();
   const { userProfile, signOut, isAuthenticated } = useAuth();
+  const { totalItems } = useCart();
+  const { myPurchases: academyPurchases, mySales: academySales } = useAcademy();
+  const {
+    myPurchases: marketPurchases,
+    mySales: marketSales,
+  } = useMarketplace();
+  const isSeller = canSellOnMarketplace(userProfile?.role);
 
   const handleSignOut = async () => {
     try {
@@ -62,15 +74,20 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.emptyText}>
             Connectez-vous pour accéder à votre profil et gérer vos diagnostics
           </Text>
-          <Button
-            title="Se connecter"
-            onPress={() => {
-              // TODO: Naviguer vers l'écran de connexion
-              console.log('Navigation vers connexion');
-            }}
-            variant="primary"
-            style={styles.emptyButton}
-          />
+          <View style={styles.emptyActions}>
+            <Button
+              title="Se connecter"
+              onPress={() => navigation.navigate('AuthLogin')}
+              variant="primary"
+              fullWidth
+            />
+            <Button
+              title="Créer un compte"
+              onPress={() => navigation.navigate('AuthRegister')}
+              variant="outline"
+              fullWidth
+            />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -131,6 +148,11 @@ export const ProfileScreen: React.FC = () => {
             )}
           </View>
           <Text style={styles.userName}>{userProfile.displayName || 'Utilisateur'}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleBadgeText}>
+              {USER_ROLE_LABELS[userProfile.role] ?? userProfile.role}
+            </Text>
+          </View>
           {userProfile.email && (
             <Text style={styles.userEmail}>{userProfile.email}</Text>
           )}
@@ -148,12 +170,12 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.statLabel}>Diagnostics</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Commandes</Text>
+              <Text style={styles.statValue}>{marketPurchases.length}</Text>
+              <Text style={styles.statLabel}>Achats Marché</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Produits vendus</Text>
+              <Text style={styles.statValue}>{isSeller ? marketSales.length : 0}</Text>
+              <Text style={styles.statLabel}>Ventes Marché</Text>
             </View>
           </View>
         </View>
@@ -161,7 +183,91 @@ export const ProfileScreen: React.FC = () => {
         {/* Section Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions</Text>
-          
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('Cart')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.menuIcon}>🛍️</Text>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Mon panier</Text>
+              <Text style={styles.menuSubtitle}>
+                {totalItems > 0
+                  ? `${totalItems} article${totalItems > 1 ? 's' : ''}`
+                  : 'Voir vos produits sélectionnés'}
+              </Text>
+            </View>
+            {totalItems > 0 && (
+              <View style={styles.menuBadge}>
+                <Text style={styles.menuBadgeText}>
+                  {totalItems > 99 ? '99+' : totalItems}
+                </Text>
+              </View>
+            )}
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M9 18l6-6-6-6"
+                stroke={colors.text.secondary}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('MarketplaceMyPurchases')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.menuIcon}>🛒</Text>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuTitle}>Mes achats Marché</Text>
+              <Text style={styles.menuSubtitle}>
+                {marketPurchases.length > 0
+                  ? `${marketPurchases.length} commande${marketPurchases.length > 1 ? 's' : ''}`
+                  : 'Historique des commandes'}
+              </Text>
+            </View>
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M9 18l6-6-6-6"
+                stroke={colors.text.secondary}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+
+          {isSeller && (
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => navigation.navigate('MarketplaceMySales')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.menuIcon}>📦</Text>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>Mes ventes Marché</Text>
+                <Text style={styles.menuSubtitle}>
+                  {marketSales.length > 0
+                    ? `${marketSales.length} vente${marketSales.length > 1 ? 's' : ''}`
+                    : 'Produits vendus sur le marché'}
+                </Text>
+              </View>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M9 18l6-6-6-6"
+                  stroke={colors.text.secondary}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>📋</Text>
             <View style={styles.menuContent}>
@@ -179,11 +285,19 @@ export const ProfileScreen: React.FC = () => {
             </Svg>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuIcon}>🛒</Text>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('AcademyMyPurchases')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.menuIcon}>📚</Text>
             <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Mes commandes</Text>
-              <Text style={styles.menuSubtitle}>Historique des achats</Text>
+              <Text style={styles.menuTitle}>Mes achats Académie</Text>
+              <Text style={styles.menuSubtitle}>
+                {academyPurchases.length > 0
+                  ? `${academyPurchases.length} guide${academyPurchases.length > 1 ? 's' : ''}`
+                  : 'Guides et manuels achetés'}
+              </Text>
             </View>
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path
@@ -196,22 +310,32 @@ export const ProfileScreen: React.FC = () => {
             </Svg>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuIcon}>📦</Text>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Mes ventes</Text>
-              <Text style={styles.menuSubtitle}>Produits que j'ai mis en vente</Text>
-            </View>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M9 18l6-6-6-6"
-                stroke={colors.text.secondary}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          </TouchableOpacity>
+          {isSeller && (
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => navigation.navigate('AcademyMySales')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.menuIcon}>💰</Text>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>Mes ventes Académie</Text>
+                <Text style={styles.menuSubtitle}>
+                  {academySales.length > 0
+                    ? `${academySales.length} vente${academySales.length > 1 ? 's' : ''}`
+                    : 'Guides vendus sur l’Académie'}
+                </Text>
+              </View>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M9 18l6-6-6-6"
+                  stroke={colors.text.secondary}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>⚙️</Text>
@@ -298,8 +422,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     textAlign: 'center',
   },
-  emptyButton: {
+  emptyActions: {
     marginTop: spacing.md,
+    width: '100%',
+    gap: spacing.sm,
+  },
+  roleBadge: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.primaryLight + '50',
+    borderRadius: 20,
+  },
+  roleBadgeText: {
+    fontSize: typography.caption.fontSize,
+    fontWeight: '700',
+    color: colors.primaryDark,
   },
   profileSection: {
     alignItems: 'center',
@@ -390,5 +529,20 @@ const styles = StyleSheet.create({
   menuSubtitle: {
     ...typography.caption,
     color: colors.text.secondary,
+  },
+  menuBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.primaryDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginRight: spacing.sm,
+  },
+  menuBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.white,
   },
 });

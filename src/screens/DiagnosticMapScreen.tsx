@@ -277,7 +277,7 @@ export const DiagnosticMapScreen: React.FC = () => {
                 keyboardType="decimal-pad"
               />
               <TouchableOpacity
-                style={[styles.actionBtn, { marginTop: spacing.sm }]}
+                style={styles.actionBtn}
                 onPress={applyGps}
                 disabled={!latInput.trim() || !lngInput.trim()}
               >
@@ -320,7 +320,7 @@ export const DiagnosticMapScreen: React.FC = () => {
                 keyboardType="decimal-pad"
               />
               <TouchableOpacity
-                style={[styles.actionBtn, { marginTop: spacing.sm }]}
+                style={styles.actionBtn}
                 onPress={applyXy}
                 disabled={!xInput.trim() || !yInput.trim()}
               >
@@ -427,6 +427,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   actionBtn: {
+    marginTop: spacing.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.white,

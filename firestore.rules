@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isSellerOrAdmin() {
+      return request.auth != null
+        && userRole() in ['agriculteur', 'administrateur'];
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isSellerOrAdmin()
+        && request.resource.data.farmerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && (resource.data.farmerId == request.auth.uid || userRole() == 'administrateur');
+    }
+
+    match /academy_guides/{guideId} {
+      allow read: if true;
+      allow create: if isSellerOrAdmin()
+        && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && (resource.data.sellerId == request.auth.uid || userRole() == 'administrateur');
+    }
+
+    match /academy_guide_content/{guideId} {
+      allow read: if true;
+      allow create: if isSellerOrAdmin()
+        && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && (resource.data.sellerId == request.auth.uid || userRole() == 'administrateur');
+    }
+
+    match /academy_orders/{orderId} {
+      allow read: if request.auth != null
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || userRole() == 'administrateur');
+      allow create: if request.auth != null
+        && request.resource.data.buyerId == request.auth.uid;
+    }
+
+    match /marketplace_orders/{orderId} {
+      allow read: if request.auth != null
+        && (resource.data.buyerId == request.auth.uid || userRole() == 'administrateur');
+      allow create: if request.auth != null
+        && request.resource.data.buyerId == request.auth.uid;
+    }
+
+    match /marketplace_sales/{saleId} {
+      allow read: if request.auth != null
+        && (resource.data.sellerId == request.auth.uid
+            || resource.data.buyerId == request.auth.uid
+            || userRole() == 'administrateur');
+      allow create: if request.auth != null
+        && request.resource.data.buyerId == request.auth.uid;
+    }
+  }
+}

@@ -8,6 +8,7 @@ export * from './MarketplaceScreen';
 export * from './ProductDetailScreen';
 export * from './CartScreen';
 export * from './CheckoutScreen';
+export * from './CreateProductScreen';
 export * from './ProfileScreen';
 export * from './WeatherDetailScreen';
 export * from './WeatherHomeScreen';

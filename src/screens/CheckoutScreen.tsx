@@ -17,6 +17,8 @@ import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
 import { useCart } from '@contexts/CartContext';
+import { useMarketplace } from '@contexts/MarketplaceContext';
+import { useAuth } from '@hooks/useAuth';
 import { colors, spacing, typography } from '@theme';
 import { Button } from '@components/common';
 
@@ -25,6 +27,8 @@ type PaymentMethod = 'mobile_money' | 'bank_transfer' | 'cash_on_delivery';
 export const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation<AppNavigationProp>();
   const { items, totalAmount, clearCart } = useCart();
+  const { placeOrder } = useMarketplace();
+  const { isAuthenticated } = useAuth();
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('mobile_money');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -39,19 +43,38 @@ export const CheckoutScreen: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (!isAuthenticated) {
+      Alert.alert('Connexion requise', 'Connectez-vous pour valider votre commande.', [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Se connecter', onPress: () => navigation.navigate('AuthLogin') },
+      ]);
+      return;
+    }
+    if (items.length === 0) {
+      Alert.alert('Panier vide', 'Ajoutez des produits avant de commander.');
+      return;
+    }
     if (selectedPayment === 'mobile_money' && !phoneNumber.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
       return;
     }
+    if (!deliveryAddress.trim()) {
+      Alert.alert('Erreur', 'Indiquez une adresse de livraison.');
+      return;
+    }
 
     setIsProcessing(true);
-
-    // Simuler le traitement de la commande
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      await placeOrder({
+        items,
+        totalAmount,
+        paymentMethod: selectedPayment,
+        deliveryAddress: deliveryAddress.trim(),
+        phoneNumber: phoneNumber.trim() || undefined,
+      });
       Alert.alert(
         'Commande confirmée',
-        'Votre commande a été enregistrée avec succès. Vous recevrez une confirmation par SMS.',
+        'Votre commande a été enregistrée. Retrouvez-la dans Profil → Mes achats Marché.',
         [
           {
             text: 'OK',
@@ -62,7 +85,14 @@ export const CheckoutScreen: React.FC = () => {
           },
         ]
       );
-    }, 2000);
+    } catch (e) {
+      Alert.alert(
+        'Commande',
+        e instanceof Error ? e.message : 'Impossible d’enregistrer la commande.'
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -158,8 +188,8 @@ export const CheckoutScreen: React.FC = () => {
             <View style={styles.paymentOptionContent}>
               <Text style={styles.paymentOptionIcon}>🏦</Text>
               <View style={styles.paymentOptionText}>
-                <Text style={styles.paymentOptionTitle}>Virement bancaire</Text>
-                <Text style={styles.paymentOptionSubtitle}>Banque de l'Habitat, UBA</Text>
+                <Text style={styles.paymentOptionTitle}>Paiement par carte </Text>
+                <Text style={styles.paymentOptionSubtitle}>Banque de l'Habitat, UBA ...</Text>
               </View>
             </View>
             {selectedPayment === 'bank_transfer' && <View style={styles.radioSelected} />}

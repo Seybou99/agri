@@ -17,9 +17,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '@theme';
 import { Button } from '@components/common';
-import { PLANTS_REQUIREMENTS, AVAILABLE_CROPS } from '@constants/plants';
+import { PLANTS_REQUIREMENTS, AVAILABLE_CROPS, getMoisRecolte } from '@constants/plants';
 import { triggerHaptic } from '@utils/haptics';
 import { fetchSoilData, fetchClimateData, calculateSuitabilityScore } from '@services/agronomy';
+import { saveLastReport } from '@services/lastReportStorage';
 import { CALENDAR_CATEGORIES_MALI } from '@/data/calendarGuideMali';
 
 export type DiagnosticConfigParams = {
@@ -129,6 +130,27 @@ export const DiagnosticConfigScreen: React.FC = () => {
     }
     triggerHaptic();
     const parcelId = `diag-${Date.now()}`;
+    const firstKey = selectedCrops[0];
+    const firstPlant = firstKey ? PLANTS_REQUIREMENTS[firstKey] : null;
+    const gs = firstPlant?.growingSeason;
+    const harvestLabel =
+      gs?.cycleLengthMonths != null && gs.start
+        ? getMoisRecolte(gs.start, gs.cycleLengthMonths)
+        : gs?.end;
+
+    void saveLastReport({
+      parcelId,
+      locationName: locationName ?? 'Ma parcelle',
+      crops: selectedCrops,
+      surfaceHa: surfaceNum,
+      lat,
+      lng,
+      createdAt: Date.now(),
+      topCropKey: firstKey,
+      topCropName: firstPlant?.name,
+      harvestLabel: harvestLabel ? `Récolte ${harvestLabel}` : undefined,
+    });
+
     const rootNav = navigation.getParent?.() ?? navigation;
     (rootNav as any).navigate('FieldReport', {
       parcelId,

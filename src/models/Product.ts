@@ -45,6 +45,7 @@ export interface ProductLocation {
 export interface MarketplaceProduct {
   id: string;
   farmerId: string;
+  farmerDisplayName?: string;
   productName: string;
   rayon: MarketplaceRayon; // Rayon principal (INTRANTS_EQUIPEMENTS, PRODUITS_FERME, ELEVAGE)
   category: ProductCategory; // Catégorie détaillée

@@ -1,8 +1,7 @@
 /**
- * HomeScreen - Page d'accueil modernisée de SeneGundo
- * Structure dynamique avec résumé d'activité, météo, services et contenu à la une
+ * HomeScreen — Accueil SeneGundo
+ * Dernier rapport · Météo · Accès rapide · À la une
  */
-
 import React from 'react';
 import {
   View,
@@ -19,19 +18,19 @@ import Svg, { Path } from 'react-native-svg';
 import { colors, spacing, typography } from '@theme';
 import type { RootStackParamList } from '@navigation/AppNavigator';
 import { useAuth } from '@hooks/useAuth';
+import { useLastReport } from '@hooks/useLastReport';
 import { triggerHaptic } from '@utils/haptics';
-import { ActivitySummary, ServiceGrid, FeaturedSlider } from '@components/home';
+import { LastReportCard, HomeWeatherPreview, ServiceGrid, FeaturedSlider } from '@components/home';
 import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN_BOTTOM } from '@navigation/styles/tabNavigatorStyles';
 
 export const HomeScreen: React.FC = () => {
   const tabNav = useNavigation();
   const stackNav = tabNav.getParent() as NativeStackNavigationProp<RootStackParamList> | undefined;
   const { userProfile } = useAuth();
+  const { report, loading: reportLoading } = useLastReport();
   const insets = useSafeAreaInsets();
 
-  // Calcul précis du padding bottom pour éviter que le contenu soit masqué
-  // TabBar height (64) + margin bottom (16) + FAB qui dépasse (30) + safe area bottom
-  const TAB_BAR_TOTAL_HEIGHT = TAB_BAR_HEIGHT + TAB_BAR_MARGIN_BOTTOM + 30; // 30px pour le FAB qui dépasse
+  const TAB_BAR_TOTAL_HEIGHT = TAB_BAR_HEIGHT + TAB_BAR_MARGIN_BOTTOM + 30;
   const bottomPadding = Math.max(TAB_BAR_TOTAL_HEIGHT, insets.bottom + TAB_BAR_TOTAL_HEIGHT);
 
   const handleNewDiagnostic = () => {
@@ -47,9 +46,26 @@ export const HomeScreen: React.FC = () => {
     });
   };
 
+  const handleOpenLastReport = () => {
+    if (!report) {
+      handleNewDiagnostic();
+      return;
+    }
+    triggerHaptic();
+    stackNav?.navigate('FieldReport', {
+      parcelId: report.parcelId,
+      crops: report.crops,
+      surface: report.surfaceHa,
+      lat: report.lat,
+      lng: report.lng,
+      locationName: report.locationName,
+    });
+  };
+
+  const displayName = userProfile?.displayName?.split(' ')[0] || 'Agriculteur';
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header avec logo et icône profil */}
       <View style={styles.topHeader}>
         <View style={styles.topHeaderContent}>
           <Text style={styles.title}>SeneGundo</Text>
@@ -77,14 +93,8 @@ export const HomeScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         </View>
-        <Text style={styles.tagline}>
-          L'intelligence des données pour la réussite de vos récoltes
-        </Text>
-        {userProfile && (
-          <Text style={styles.welcomeText}>
-            Bonjour, {userProfile.displayName || 'Utilisateur'}
-          </Text>
-        )}
+        <Text style={styles.greeting}>Bonjour, {displayName}</Text>
+        <Text style={styles.heroQuestion}>Que souhaitez-vous faire ?</Text>
       </View>
 
       <ScrollView
@@ -92,33 +102,19 @@ export const HomeScreen: React.FC = () => {
         contentContainerStyle={[styles.content, { paddingBottom: bottomPadding + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section Résumé d'activité (Carousel) */}
-        <View style={styles.section}>
-          <ActivitySummary
-            onDiagnosticPress={handleNewDiagnostic}
-            onWeatherPress={handleWeatherPress}
-          />
-        </View>
+        <LastReportCard
+          report={report}
+          loading={reportLoading}
+          onPress={handleOpenLastReport}
+          onNewDiagnostic={handleNewDiagnostic}
+        />
 
-        {/* Section Tableau de Bord - Grille de Services */}
-        <View style={styles.section}>
-          <ServiceGrid onWeatherPress={handleWeatherPress} />
-        </View>
+        <HomeWeatherPreview onPress={handleWeatherPress} />
 
-        {/* Section À la Une - Slider */}
+        <ServiceGrid />
+
         <View style={styles.section}>
           <FeaturedSlider />
-        </View>
-
-        {/* Message de crédibilité */}
-        <View style={styles.credibilitySection}>
-          <View style={styles.credibilityContent}>
-            <Text style={styles.shieldIcon}>🛡️</Text>
-            <Text style={styles.credibilityText}>
-              Certifié par la donnée : Nos rapports utilisent les bases de données de l'IER et les
-              satellites de l'ESA.
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -135,18 +131,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
-    borderBottomWidth: 0,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.gray[200],
   },
   topHeaderContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 26,
@@ -171,20 +163,16 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
     fontWeight: '600',
   },
-  tagline: {
-    fontSize: 12,
+  greeting: {
+    fontSize: 14,
     color: colors.text.secondary,
-    textAlign: 'left',
-    fontStyle: 'italic',
-    marginTop: spacing.xs / 2,
-    lineHeight: 16,
+    marginBottom: spacing.xs,
   },
-  welcomeText: {
-    ...typography.bodySmall,
+  heroQuestion: {
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.text.primary,
-    marginTop: spacing.xs / 2,
-    fontWeight: '500',
-    fontSize: 13,
+    lineHeight: 28,
   },
   scrollView: {
     flex: 1,
@@ -194,31 +182,5 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing.lg,
-  },
-  credibilitySection: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-    padding: spacing.md,
-    backgroundColor: colors.gray[50],
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: colors.gray[200],
-  },
-  credibilityContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  shieldIcon: {
-    fontSize: 20,
-    marginRight: spacing.sm,
-    marginTop: 2,
-  },
-  credibilityText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    flex: 1,
-    lineHeight: 16,
-    fontSize: 11,
   },
 });

@@ -1,84 +1,32 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "expo/tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "jsx": "react-native",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@components/*": [
-        "./src/components/*"
-      ],
-      "@screens": [
-        "./src/screens/index"
-      ],
-      "@screens/*": [
-        "./src/screens/*"
-      ],
-      "@services/*": [
-        "./src/services/*"
-      ],
-      "@hooks/*": [
-        "./src/hooks/*"
-      ],
-      "@utils/*": [
-        "./src/utils/*"
-      ],
-      "@navigation/*": [
-        "./src/navigation/*"
-      ],
-      "@theme": [
-        "./src/theme"
-      ],
-      "@theme/*": [
-        "./src/theme/*"
-      ],
-      "@assets": [
-        "./src/assets"
-      ],
-      "@assets/*": [
-        "./src/assets/*"
-      ],
-      "@types/*": [
-        "./src/types/*"
-      ],
-      "@config": [
-        "./src/config"
-      ],
-      "@config/*": [
-        "./src/config/*"
-      ],
-      "@constants": [
-        "./src/constants"
-      ],
-      "@constants/*": [
-        "./src/constants/*"
-      ],
-      "@models": [
-        "./src/models"
-      ],
-      "@models/*": [
-        "./src/models/*"
-      ],
-      "@contexts": [
-        "./src/contexts"
-      ],
-      "@contexts/*": [
-        "./src/contexts/*"
-      ]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@screens": ["./src/screens/index"],
+      "@screens/*": ["./src/screens/*"],
+      "@services/*": ["./src/services/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@theme": ["./src/theme"],
+      "@theme/*": ["./src/theme/*"],
+      "@assets": ["./src/assets"],
+      "@assets/*": ["./src/assets/*"],
+      "@types/*": ["./src/types/*"],
+      "@config": ["./src/config"],
+      "@config/*": ["./src/config/*"],
+      "@constants": ["./src/constants"],
+      "@constants/*": ["./src/constants/*"],
+      "@models": ["./src/models"],
+      "@models/*": ["./src/models/*"],
+      "@contexts": ["./src/contexts"],
+      "@contexts/*": ["./src/contexts/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

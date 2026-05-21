@@ -18,75 +18,24 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
 import Svg, { Path } from 'react-native-svg';
-import { MarketplaceProduct } from '@models/Product';
+import { DELIVERY_OPTION_LABELS } from '@constants/productCategories';
+import type { DeliveryOption } from '@models/Product';
 import { colors, spacing, typography } from '@theme';
 import { Button } from '@components/common';
 import { useCart } from '@contexts/CartContext';
+import { useMarketplace } from '@contexts/MarketplaceContext';
 import { triggerHaptic } from '@utils/haptics';
 
 type ProductDetailRouteProp = RouteProp<{ ProductDetail: { productId: string } }, 'ProductDetail'>;
-
-// Données mock (à remplacer par un appel API/Firestore)
-const MOCK_PRODUCTS: Record<string, MarketplaceProduct> = {
-  '1': {
-    id: '1',
-    farmerId: 'farmer1',
-    productName: 'Semences de tomate certifiées',
-    rayon: 'INTRANTS_EQUIPEMENTS',
-    category: 'Semences',
-    description:
-      'Semences de tomate certifiées, variété résistante aux maladies. Idéal pour les sols maliens. Rendement élevé garanti.',
-    price: 5000,
-    unit: 'sachet',
-    stockQuantity: 50,
-    location: {
-      geopoint: { latitude: 12.65, longitude: -7.99 },
-      name: 'Bamako',
-      address: 'Marché de Bamako, Zone A',
-    },
-    images: [],
-    deliveryOptions: ['click_and_collect', 'delivery'],
-    isCertified: true,
-    diagnosticId: 'diag_123',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  '5': {
-    id: '5',
-    farmerId: 'farmer5',
-    productName: 'Bœuf d\'embouche',
-    rayon: 'ELEVAGE',
-    category: 'Bovins',
-    description:
-      'Bœuf d\'embouche de qualité supérieure avec suivi vétérinaire et assurance inclus. Parfait pour investissement.',
-    price: 250000,
-    unit: 'tête',
-    stockQuantity: 5,
-    location: {
-      geopoint: { latitude: 12.65, longitude: -7.99 },
-      name: 'Bamako',
-      address: 'Ferme d\'élevage, Route de Koulikoro',
-    },
-    images: [],
-    deliveryOptions: ['pickup'],
-    isCertified: false,
-    livestockPack: {
-      includes: ['Achat', 'Suivi vétérinaire', 'Assurance'],
-      veterinaryFollowUp: true,
-      insurance: true,
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-};
 
 export const ProductDetailScreen: React.FC = () => {
   const route = useRoute<ProductDetailRouteProp>();
   const navigation = useNavigation<AppNavigationProp>();
   const { productId } = route.params;
   const { addToCart } = useCart();
+  const { getProductById } = useMarketplace();
 
-  const product = MOCK_PRODUCTS[productId];
+  const product = getProductById(productId);
 
   if (!product) {
     return (
@@ -207,7 +156,7 @@ export const ProductDetailScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Options de livraison</Text>
             {product.deliveryOptions.map((option, index) => (
               <Text key={index} style={styles.deliveryOption}>
-                • {option === 'click_and_collect' ? 'Click & Collect' : option}
+                • {DELIVERY_OPTION_LABELS[option as DeliveryOption] ?? option}
               </Text>
             ))}
           </View>

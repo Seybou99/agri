@@ -114,8 +114,8 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
   const routes = state.routes;
   const bottomPadding = Math.max(TAB_BAR_MARGIN_BOTTOM, insets.bottom);
 
-  const handleNewDiagnostic = () => {
-    stackNav?.navigate('DiagnosticMap');
+  const handlePlantDiseaseDiagnostic = () => {
+    stackNav?.navigate('PlantDisease');
   };
 
   return (
@@ -123,8 +123,9 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
       {/* Bouton FAB intégré */}
       <TouchableOpacity
         style={styles.fabButton}
-        onPress={handleNewDiagnostic}
+        onPress={handlePlantDiseaseDiagnostic}
         activeOpacity={0.9}
+        accessibilityLabel="Diagnostic maladie de plante"
       >
         <View style={styles.fabContent}>
           <Text style={styles.fabIcon}>+</Text>

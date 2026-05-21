@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { colors, spacing, typography } from '@theme';
 
 export interface ParcelCardData {
@@ -19,6 +20,8 @@ export interface ParcelCardData {
 interface ParcelCardProps {
   data: ParcelCardData;
   onBack: () => void;
+  /** Retour à l’accueil (remplace le bouton expand quand fourni). */
+  onFinish?: () => void;
   onExpand?: () => void;
   style?: ViewStyle;
 }
@@ -30,6 +33,7 @@ interface ParcelCardProps {
 export const ParcelCard: React.FC<ParcelCardProps> = ({
   data,
   onBack,
+  onFinish,
   onExpand,
   style,
 }) => (
@@ -39,16 +43,35 @@ export const ParcelCard: React.FC<ParcelCardProps> = ({
         onPress={onBack}
         style={styles.iconBtn}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        accessibilityLabel="Retour"
       >
         <Text style={styles.icon}>←</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={onExpand}
-        style={styles.iconBtn}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-      >
-        <Text style={styles.icon}>↗</Text>
-      </TouchableOpacity>
+      {onFinish ? (
+        <TouchableOpacity
+          onPress={onFinish}
+          style={[styles.iconBtn, styles.iconBtnPrimary]}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel="Retour à l'accueil"
+        >
+          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1v-9.5z"
+              stroke={colors.white}
+              strokeWidth={2}
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </TouchableOpacity>
+      ) : onExpand ? (
+        <TouchableOpacity
+          onPress={onExpand}
+          style={styles.iconBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Text style={styles.icon}>↗</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
     <View style={styles.mapArea}>
       <View style={styles.mapShape}>
@@ -93,6 +116,10 @@ const styles = StyleSheet.create({
     borderColor: colors.gray[200],
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconBtnPrimary: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   icon: {
     fontSize: 18,

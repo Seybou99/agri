@@ -2,6 +2,7 @@
   "expo": {
     "name": "SeneGundo",
     "slug": "senegundo",
+    "scheme": "senegundo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +16,17 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.senegundo.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "SeneGundo a besoin de votre localisation pour analyser votre terrain agricole."
+        "NSLocationWhenInUseUsageDescription": "SeneGundo a besoin de votre localisation pour analyser votre terrain agricole.",
+        "NSCameraUsageDescription": "SeneGundo utilise la caméra pour diagnostiquer les maladies des plantes.",
+        "NSPhotoLibraryUsageDescription": "SeneGundo accède à vos photos pour le diagnostic des plantes et la marketplace.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "senegundo",
+              "com.googleusercontent.apps.842426421557-qc3qgn7pktekheqfinqp7ti7nknjvmt5"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -39,6 +50,20 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "SeneGundo a besoin de votre localisation pour analyser votre terrain agricole."
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SeneGundo a besoin d’accéder à vos photos pour illustrer vos produits et diagnostiquer les maladies des plantes.",
+          "cameraPermission": "SeneGundo utilise la caméra pour photographier les plantes et identifier les maladies."
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
         }
       ]
     ]

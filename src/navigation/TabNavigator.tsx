@@ -14,9 +14,9 @@ import { useCart } from '@contexts/CartContext';
 
 // Écrans
 import { HomeScreen } from '@screens/HomeScreen';
-import { PlaceholderScreen } from '@screens/PlaceholderScreen';
 import { DiagnosticMapScreen } from '@screens/DiagnosticMapScreen';
 import { MarketplaceScreen } from '@screens/MarketplaceScreen';
+import { AcademyScreen } from '@screens/AcademyScreen';
 
 export type TabParamList = {
   Home: undefined;
@@ -28,8 +28,6 @@ export type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 // Placeholders pour les onglets à venir
-const AcademyPlaceholder = () => <PlaceholderScreen name="Académie" />;
-
 // Composant pour l'icône Marketplace avec badge
 const MarketplaceIconWithBadge: React.FC<{ color: string; size: number }> = ({ color, size }) => {
   const { totalItems } = useCart();
@@ -108,7 +106,7 @@ export const TabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Academy"
-        component={AcademyPlaceholder}
+        component={AcademyScreen}
         options={{
           tabBarLabel: 'Académie',
           tabBarShowLabel: false,

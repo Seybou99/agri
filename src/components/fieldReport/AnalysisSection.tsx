@@ -3,12 +3,45 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-nativ
 import { colors, spacing, typography } from '@theme';
 import { PLANTS_REQUIREMENTS } from '@constants/plants';
 import type { IdealCropItem } from '@hooks/useDiagnosticReport';
+import type { SoilData } from '@services/agronomy/soilService';
+import { isDefaultSoilData } from '@services/agronomy/soilService';
 
 export interface AnalysisSectionProps {
   idealCrops: IdealCropItem[];
   otherCrops: IdealCropItem[];
+  /** Sol iSDAsoil utilisé pour les scores (même source que l’onglet Résumé). */
+  soil?: SoilData | null;
+  /** Pluviométrie annuelle (NASA POWER), pour le score eau 20 %. */
+  annualRainfallMm?: number;
   onBuySeeds?: (cropKey: string) => void;
   style?: ViewStyle;
+}
+
+function formatFr(n: number, digits = 1): string {
+  return n.toFixed(digits).replace('.', ',');
+}
+
+function SoilContextBanner({ soil, annualRainfallMm }: { soil: SoilData; annualRainfallMm?: number }) {
+  const texture = soil.texture.charAt(0).toUpperCase() + soil.texture.slice(1);
+  const rain =
+    annualRainfallMm != null && annualRainfallMm > 0
+      ? ` · Pluie ${Math.round(annualRainfallMm)} mm/an`
+      : '';
+  return (
+    <View style={styles.soilBanner}>
+      <Text style={styles.soilBannerTitle}>Données prises en compte (iSDAsoil + climat)</Text>
+      <Text style={styles.soilBannerText}>
+        pH {formatFr(soil.ph)} · {texture} · Argile {Math.round(soil.clay)} % · Sable {Math.round(soil.sand)} %
+        {' '}· Limon {Math.round(soil.silt)} % · C organique {formatFr(soil.organicCarbon)} g/kg · N{' '}
+        {formatFr(soil.nitrogen)} g/kg{rain}
+      </Text>
+      {isDefaultSoilData(soil) && (
+        <Text style={styles.soilBannerWarn}>
+          Classement basé sur des valeurs estimées — connectez l’API sol pour ce point GPS.
+        </Text>
+      )}
+    </View>
+  );
 }
 
 const SUITABILITY_LABEL: Record<string, string> = {
@@ -117,6 +150,8 @@ function CropCard({
 export const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   idealCrops,
   otherCrops,
+  soil,
+  annualRainfallMm,
   style,
   onBuySeeds,
 }) => {
@@ -139,8 +174,11 @@ export const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         Classement par score d'aptitude (0–10) selon le sol et le climat de la zone sélectionnée.
       </Text>
       <Text style={styles.criteria}>
-        Critères : sol (pH, texture, nutriments) 40 % · climat (températures) 40 % · eau (pluviométrie) 20 %.
+        Critères : sol (pH, texture, matière organique, azote) 40 % · climat (températures) 40 % · eau
+        (pluviométrie) 20 %.
       </Text>
+
+      {soil && <SoilContextBanner soil={soil} annualRainfallMm={annualRainfallMm} />}
 
       {idealCrops.map(({ key, name, result }) => (
         <CropCard
@@ -203,8 +241,32 @@ const styles = StyleSheet.create({
   criteria: {
     fontSize: typography.bodySmall.fontSize,
     color: colors.text.secondary,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     fontStyle: 'italic',
+  },
+  soilBanner: {
+    backgroundColor: colors.primaryLight + '30',
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  soilBannerTitle: {
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: spacing.xs,
+  },
+  soilBannerText: {
+    fontSize: typography.caption.fontSize,
+    color: colors.text.primary,
+    lineHeight: 18,
+  },
+  soilBannerWarn: {
+    fontSize: typography.caption.fontSize,
+    color: colors.error,
+    marginTop: spacing.xs,
   },
   card: {
     backgroundColor: colors.white,

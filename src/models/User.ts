@@ -1,6 +1,7 @@
-// Modèle User pour Firestore
+// Modèle utilisateur Firestore / profil app
 
-export type UserRole = 'investor' | 'farmer' | 'buyer';
+/** Rôles applicatifs (évolution : droits par rôle). */
+export type UserRole = 'utilisateur' | 'administrateur' | 'agriculteur';
 
 export interface User {
   uid: string;
@@ -14,10 +15,11 @@ export interface User {
   };
   createdAt: Date;
   isPremium: boolean;
+  avatarUrl?: string;
+  verified?: boolean;
 }
 
 export interface UserProfile extends User {
-  // Données additionnelles pour le profil
   avatarUrl?: string;
   bio?: string;
   verified: boolean;

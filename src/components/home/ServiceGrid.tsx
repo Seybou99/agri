@@ -1,193 +1,147 @@
 /**
- * ServiceGrid - Grille de services (Diagnostic, Boutique, Élevage, Académie)
+ * ACCÈS RAPIDE — grille 2×2 + bandeau données certifiées
  */
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import * as Location from 'expo-location';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
-import { colors, spacing, typography } from '@theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+import { colors, spacing } from '@theme';
 import { useNavigation } from '@react-navigation/native';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
-import { useAuth } from '@hooks/useAuth';
 
-interface ServiceCardProps {
+type IconVariant = 'onDark' | 'onOrange' | 'onLight';
+
+type QuickAccessItem = {
+  id: string;
   title: string;
-  icon: React.ReactNode;
-  color: string;
+  subtitle: string;
+  backgroundColor: string;
+  titleColor: string;
+  subtitleColor: string;
+  border?: boolean;
+  iconVariant: IconVariant;
+  iconColor: string;
+  ionIcon?: ComponentProps<typeof Ionicons>['name'];
+  mciIcon?: ComponentProps<typeof MaterialCommunityIcons>['name'];
   onPress: () => void;
-  isLarge?: boolean;
+};
+
+const ICON_BOX_BG: Record<IconVariant, string> = {
+  onDark: 'rgba(255,255,255,0.18)',
+  onOrange: 'rgba(255,255,255,0.22)',
+  onLight: colors.gray[100],
+};
+
+function QuickCardIcon({ item }: { item: QuickAccessItem }) {
+  if (item.mciIcon) {
+    return <MaterialCommunityIcons name={item.mciIcon} size={24} color={item.iconColor} />;
+  }
+  return <Ionicons name={item.ionIcon!} size={24} color={item.iconColor} />;
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({
-  title,
-  icon,
-  color,
-  onPress,
-  isLarge = false,
-}) => (
-  <TouchableOpacity
-    style={[styles.serviceCard, { backgroundColor: color }, isLarge && styles.largeCard]}
-    onPress={onPress}
-    activeOpacity={0.8}
-  >
-    <View style={styles.iconContainer}>{icon}</View>
-    <Text style={styles.serviceTitle}>{title}</Text>
-  </TouchableOpacity>
-);
-
-interface ServiceGridProps {
-  onWeatherPress?: (location: { lat: number; lng: number; name: string }) => void;
+function QuickCard({ item }: { item: QuickAccessItem }) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.quickCard,
+        { backgroundColor: item.backgroundColor },
+        item.border && styles.quickCardBorder,
+      ]}
+      onPress={item.onPress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.quickCardBody}>
+        <View style={[styles.iconBox, { backgroundColor: ICON_BOX_BG[item.iconVariant] }]}>
+          <QuickCardIcon item={item} />
+        </View>
+        <View style={styles.quickTextBlock}>
+          <Text style={[styles.quickTitle, { color: item.titleColor }]}>{item.title}</Text>
+          <Text style={[styles.quickSubtitle, { color: item.subtitleColor }]}>{item.subtitle}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 }
 
-export const ServiceGrid: React.FC<ServiceGridProps> = ({ onWeatherPress }) => {
+export const ServiceGrid: React.FC = () => {
   const navigation = useNavigation<AppNavigationProp>();
-  const { userProfile } = useAuth();
-  const [location, setLocation] = useState<{ lat: number; lng: number; name: string }>({
-    lat: 12.65,
-    lng: -7.99,
-    name: 'Bamako',
-  });
 
-  useEffect(() => {
-    const getLocation = async () => {
-      // Priorité 1: Localisation de l'utilisateur
-      if (userProfile?.location) {
-        setLocation({
-          lat: userProfile.location.lat,
-          lng: userProfile.location.lng,
-          name: 'Votre zone',
-        });
-        return;
-      }
-
-      // Priorité 2: Position actuelle
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const currentLocation = await Location.getCurrentPositionAsync({});
-          setLocation({
-            lat: currentLocation.coords.latitude,
-            lng: currentLocation.coords.longitude,
-            name: 'Position actuelle',
-          });
-        }
-      } catch (error) {
-        console.error('Erreur localisation:', error);
-      }
-    };
-
-    getLocation();
-  }, [userProfile]);
-
-  const handleWeatherPress = () => {
-    onWeatherPress?.(location);
-  };
+  const items: QuickAccessItem[] = [
+    {
+      id: 'diagnostic',
+      title: 'Diagnostic',
+      subtitle: 'À partir de 5 000 FCFA',
+      backgroundColor: colors.primaryDark,
+      titleColor: colors.white,
+      subtitleColor: 'rgba(255,255,255,0.85)',
+      iconVariant: 'onDark',
+      iconColor: colors.white,
+      ionIcon: 'bar-chart-outline',
+      onPress: () => navigation.navigate('DiagnosticMap'),
+    },
+    {
+      id: 'academy',
+      title: 'Académie',
+      subtitle: 'Formations & guides',
+      backgroundColor: colors.white,
+      titleColor: colors.text.primary,
+      subtitleColor: colors.text.secondary,
+      border: true,
+      iconVariant: 'onLight',
+      iconColor: colors.primaryDark,
+      ionIcon: 'book-outline',
+      onPress: () => navigation.navigate('MainTabs', { screen: 'Academy' }),
+    },
+    {
+      id: 'elevage',
+      title: 'Élevage',
+      subtitle: 'Suivi & conseils',
+      backgroundColor: '#E67E22',
+      titleColor: colors.white,
+      subtitleColor: 'rgba(255,255,255,0.9)',
+      iconVariant: 'onOrange',
+      iconColor: colors.white,
+      mciIcon: 'paw',
+      onPress: () => navigation.navigate('MainTabs', { screen: 'Academy' }),
+    },
+    {
+      id: 'shop',
+      title: 'Boutique',
+      subtitle: 'Intrants & semences',
+      backgroundColor: colors.white,
+      titleColor: colors.text.primary,
+      subtitleColor: colors.text.secondary,
+      border: true,
+      iconVariant: 'onLight',
+      iconColor: colors.primaryDark,
+      ionIcon: 'bag-handle-outline',
+      onPress: () => navigation.navigate('MainTabs', { screen: 'Marketplace' }),
+    },
+  ];
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Mon Tableau de Bord</Text>
-        <Text style={styles.sectionSubtitle}>à partir de 5 000 FCFA</Text>
-      </View>
+      <Text style={styles.sectionTitle}>ACCÈS RAPIDE</Text>
 
       <View style={styles.grid}>
-        {/* Ligne 1 - Grandes cartes */}
         <View style={styles.row}>
-          <ServiceCard
-            title="Diagnostic"
-            color={colors.primaryLight}
-            onPress={() => navigation.navigate('DiagnosticMap')}
-            isLarge
-            icon={
-              <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                <Rect x="3" y="3" width="7" height="7" stroke={colors.primaryDark} strokeWidth="2" />
-                <Rect x="14" y="3" width="7" height="7" stroke={colors.primaryDark} strokeWidth="2" />
-                <Path
-                  d="M6.5 6.5L17.5 17.5M17.5 6.5L6.5 17.5"
-                  stroke={colors.primaryDark}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </Svg>
-            }
-          />
-          <ServiceCard
-            title="Météo du jour"
-            color={colors.primaryDark}
-            onPress={handleWeatherPress}
-            isLarge
-            icon={
-              <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                <Circle cx="12" cy="12" r="5" stroke={colors.white} strokeWidth="2" />
-                <Path
-                  d="M12 2v2M12 20v2M22 12h-2M4 12H2M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41M19.07 19.07l-1.41-1.41M6.34 6.34L4.93 4.93"
-                  stroke={colors.white}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </Svg>
-            }
-          />
+          <QuickCard item={items[0]} />
+          <QuickCard item={items[1]} />
         </View>
-
-        {/* Ligne 2 - Petites cartes */}
         <View style={styles.row}>
-          <ServiceCard
-            title="Boutique"
-            color={colors.primaryDark}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Marketplace' })}
-            icon={
-              <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18M16 10a4 4 0 01-8 0"
-                  stroke={colors.white}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            }
-          />
-          <ServiceCard
-            title="Élevage"
-            color={colors.secondary}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Marketplace' })}
-            icon={
-              <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                  stroke={colors.white}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Circle cx="12" cy="9" r="2.5" fill={colors.white} />
-              </Svg>
-            }
-          />
-          <ServiceCard
-            title="Académie"
-            color={colors.primaryDark}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Academy' })}
-            icon={
-              <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 014 17V6a2 2 0 012-2h14a2 2 0 012 2v11a2.5 2.5 0 01-2.5 2.5H4z"
-                  stroke={colors.white}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <Path
-                  d="M9 9h6M9 13h6"
-                  stroke={colors.white}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </Svg>
-            }
-          />
+          <QuickCard item={items[2]} />
+          <QuickCard item={items[3]} />
+        </View>
+      </View>
+
+      <View style={styles.certified}>
+        <Text style={styles.certifiedIcon}>🛡️</Text>
+        <View style={styles.certifiedTextWrap}>
+          <Text style={styles.certifiedTitle}>Données certifiées</Text>
+          <Text style={styles.certifiedSources}>iSDAsoil · NASA POWER · ESA Sentinel</Text>
+        </View>
+        <View style={styles.verifiedBadge}>
+          <Text style={styles.verifiedText}>Vérifié</Text>
         </View>
       </View>
     </View>
@@ -196,61 +150,95 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({ onWeatherPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 0,
-  },
-  header: {
-    marginBottom: spacing.sm,
     paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.h3,
-    color: colors.text.primary,
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: spacing.xs / 2,
-  },
-  sectionSubtitle: {
-    ...typography.bodySmall,
-    color: colors.primary,
-    fontWeight: '600',
+    letterSpacing: 1,
+    color: colors.text.secondary,
+    marginBottom: spacing.md,
   },
   grid: {
-    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
   },
   row: {
     flexDirection: 'row',
-    marginBottom: spacing.sm,
     gap: spacing.sm,
   },
-  serviceCard: {
+  quickCard: {
+    flex: 1,
     borderRadius: 16,
     padding: spacing.md,
+    minHeight: 118,
+  },
+  quickCardBorder: {
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  /** Colonne icône + texte, ancrée en haut à gauche (maquette). */
+  quickCardBody: {
+    gap: 10,
+    alignSelf: 'stretch',
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    flex: 1,
-    height: 110, // Hauteur fixe pour homogénéité
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  largeCard: {
-    height: 110, // Même hauteur que les petites cartes pour homogénéité
+  quickTextBlock: {
+    alignSelf: 'stretch',
   },
-  iconContainer: {
-    marginBottom: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  serviceTitle: {
-    ...typography.body,
+  quickTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: colors.white,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 2,
+    textAlign: 'left',
+  },
+  quickSubtitle: {
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: 'left',
+  },
+  certified: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  certifiedIcon: {
+    fontSize: 22,
+    marginRight: spacing.sm,
+  },
+  certifiedTextWrap: {
+    flex: 1,
+  },
+  certifiedTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.primary,
+  },
+  certifiedSources: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  verifiedBadge: {
+    backgroundColor: colors.primaryLight + '40',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 20,
+  },
+  verifiedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primaryDark,
   },
 });

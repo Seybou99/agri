@@ -126,12 +126,18 @@ function calculateSoilScore(
     recommendations.push('Prévoir un système de drainage ou des buttes');
   }
   
-  // Vérifier la matière organique
-  if (soil.organicCarbon < 1.0) {
+  // Matière organique (iSDA : g/kg)
+  if (soil.organicCarbon < 2.0) {
     score -= 1;
     recommendations.push('Apport de matière organique recommandé (fumier, compost)');
   }
-  
+
+  // Azote total (iSDA nitrogen_total : g/kg)
+  if (soil.nitrogen < 0.35) {
+    score -= 0.5;
+    recommendations.push('Apport azoté recommandé selon le stade de la culture');
+  }
+
   return Math.max(0, Math.min(10, score));
 }
 

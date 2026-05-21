@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -21,6 +22,7 @@ import type { GrowthPeriod } from '@components/fieldReport';
 import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
 import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
+import { patchLastReport } from '@services/lastReportStorage';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
 import { isDefaultSoilData, type SoilData } from '@services/agronomy/soilService';
 import { useRecommendationsFromApi } from '../hooks/useRecommendationsFromApi';
@@ -28,6 +30,7 @@ import { useProfitabilityFromApi } from '../hooks/useProfitabilityFromApi';
 import { useCalendarGuideData } from '../hooks/useCalendarGuideData';
 import { useAgroData } from '../hooks/useAgroData';
 import { API_URL } from 'react-native-dotenv';
+import { triggerHaptic } from '@utils/haptics';
 
 const MOCK_PARCEL_DEFAULT = {
   name: 'Parcelle oignon',
@@ -213,8 +216,42 @@ export const FieldReportScreen: React.FC = () => {
     [climate, growthPeriod]
   );
 
+  useEffect(() => {
+    if (loading || !params?.parcelId || !soil || idealCrops.length === 0) return;
+    const top = idealCrops[0];
+    void patchLastReport({
+      parcelId: params.parcelId,
+      locationName: params.locationName ?? 'Ma parcelle',
+      crops,
+      surfaceHa: params.surface ?? parcel.surfaceHa,
+      lat: lat!,
+      lng: lng!,
+      topCropKey: top.key,
+      topCropName: top.name,
+      aptitudeScore: top.result.score,
+      soilTexture: soil.texture,
+      ph: soil.ph,
+    });
+  }, [
+    loading,
+    params?.parcelId,
+    params?.locationName,
+    params?.surface,
+    lat,
+    lng,
+    crops,
+    soil,
+    idealCrops,
+    parcel.surfaceHa,
+  ]);
+
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
+  }, [navigation]);
+
+  const handleFinish = useCallback(() => {
+    triggerHaptic();
+    navigation.navigate('MainTabs', { screen: 'Home' });
   }, [navigation]);
 
   const handleExportPdf = useCallback(async () => {
@@ -302,6 +339,8 @@ export const FieldReportScreen: React.FC = () => {
   );
 
   const insets = useSafeAreaInsets();
+  const finishBarPadding = Math.max(insets.bottom, spacing.md);
+  const scrollBottomPad = 72 + finishBarPadding;
   const hasCoords = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
   const showOverview = activeTab === 'Résumé';
   const showOverviewContent = showOverview && !loading && (!hasCoords || !error);
@@ -310,13 +349,16 @@ export const FieldReportScreen: React.FC = () => {
     <View style={styles.container}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: spacing.lg + insets.top }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: spacing.lg + insets.top, paddingBottom: scrollBottomPad },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <ParcelCard
           data={parcel}
           onBack={handleBack}
-          onExpand={() => {}}
+          onFinish={handleFinish}
         />
         <ReportTabs active={activeTab} onSelect={setActiveTab} />
 
@@ -434,10 +476,12 @@ export const FieldReportScreen: React.FC = () => {
           </>
         )}
 
-        {activeTab === 'Analyse' && !loading && (
+        {activeTab === 'Analyse' && !loading && !error && (
           <AnalysisSection
             idealCrops={idealCrops}
             otherCrops={otherCrops}
+            soil={soil}
+            annualRainfallMm={climate?.annualRainfall}
             onBuySeeds={handleBuySeeds}
           />
         )}
@@ -458,6 +502,26 @@ export const FieldReportScreen: React.FC = () => {
           />
         )}
       </ScrollView>
+
+      <View style={[styles.finishBar, { paddingBottom: finishBarPadding }]}>
+        <TouchableOpacity
+          style={styles.finishButton}
+          onPress={handleFinish}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Terminer et retourner à l'accueil"
+        >
+          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1v-9.5z"
+              stroke={colors.white}
+              strokeWidth={2}
+              strokeLinejoin="round"
+            />
+          </Svg>
+          <Text style={styles.finishLabel}>Terminer · Accueil</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -465,7 +529,38 @@ export const FieldReportScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
+  content: { paddingHorizontal: spacing.lg },
+  finishBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.gray[200],
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  finishButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: spacing.md,
+    minHeight: 52,
+  },
+  finishLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.white,
+  },
   kpiSectionTitle: {
     fontSize: typography.bodySmall.fontSize,
     fontWeight: '700',

@@ -12,6 +12,16 @@ import { ProfileScreen } from '@screens/ProfileScreen';
 import { WeatherHomeScreen } from '@screens/WeatherHomeScreen';
 import { Next7DaysScreen } from '../screens/Next7DaysScreen';
 import { ForecastScreen } from '@screens/ForecastScreen';
+import { LoginScreen } from '@screens/LoginScreen';
+import { RegisterScreen } from '@screens/RegisterScreen';
+import { CreateProductScreen } from '@screens/CreateProductScreen';
+import { CreateAcademyGuideScreen } from '@screens/CreateAcademyGuideScreen';
+import { AcademyGuideDetailScreen } from '@screens/AcademyGuideDetailScreen';
+import { AcademyMyPurchasesScreen } from '@screens/AcademyMyPurchasesScreen';
+import { AcademyMySalesScreen } from '@screens/AcademyMySalesScreen';
+import { MarketplaceMyPurchasesScreen } from '@screens/MarketplaceMyPurchasesScreen';
+import { MarketplaceMySalesScreen } from '@screens/MarketplaceMySalesScreen';
+import { PlantDiseaseScreen } from '@screens/PlantDiseaseScreen';
 
 /** Params pour navigation imbriquée vers un onglet (ex. Marketplace avec filtre). */
 export type MainTabsParams =
@@ -38,6 +48,16 @@ export type RootStackParamList = {
   Cart: undefined;
   Checkout: undefined;
   Profile: undefined;
+  AuthLogin: undefined;
+  AuthRegister: undefined;
+  CreateProduct: undefined;
+  CreateAcademyGuide: undefined;
+  AcademyGuideDetail: { guideId: string };
+  AcademyMyPurchases: undefined;
+  AcademyMySales: undefined;
+  MarketplaceMyPurchases: undefined;
+  MarketplaceMySales: undefined;
+  PlantDisease: undefined;
   WeatherHome: { lat?: number; lng?: number; locationName?: string };
   Next7Days: { lat?: number; lng?: number; locationName?: string };
   Forecast: { lat?: number; lng?: number; locationName?: string };
@@ -64,6 +84,16 @@ export const AppNavigator: React.FC = () => {
         <Stack.Screen name="Cart" component={CartScreen} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="AuthLogin" component={LoginScreen} />
+        <Stack.Screen name="AuthRegister" component={RegisterScreen} />
+        <Stack.Screen name="CreateProduct" component={CreateProductScreen} />
+        <Stack.Screen name="CreateAcademyGuide" component={CreateAcademyGuideScreen} />
+        <Stack.Screen name="AcademyGuideDetail" component={AcademyGuideDetailScreen} />
+        <Stack.Screen name="AcademyMyPurchases" component={AcademyMyPurchasesScreen} />
+        <Stack.Screen name="AcademyMySales" component={AcademyMySalesScreen} />
+        <Stack.Screen name="MarketplaceMyPurchases" component={MarketplaceMyPurchasesScreen} />
+        <Stack.Screen name="MarketplaceMySales" component={MarketplaceMySalesScreen} />
+        <Stack.Screen name="PlantDisease" component={PlantDiseaseScreen} />
         <Stack.Screen name="WeatherHome" component={WeatherHomeScreen} />
         <Stack.Screen name="Next7Days" component={Next7DaysScreen} />
         <Stack.Screen name="Forecast" component={ForecastScreen} />
