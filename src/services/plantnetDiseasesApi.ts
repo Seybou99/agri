@@ -38,7 +38,25 @@ export async function identifyPlantDiseases(
     body: JSON.stringify({ images }),
   });
 
-  const json = (await res.json()) as Record<string, unknown>;
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    const preview = text.trim().slice(0, 160);
+    if (
+      res.status === 404 &&
+      (preview.toLowerCase().includes('not_found') ||
+        preview.toLowerCase().includes('could not be found'))
+    ) {
+      throw new Error(
+        'Le diagnostic maladies n’est pas disponible sur le serveur. Redéployez l’API Vercel (dernière version du projet).'
+      );
+    }
+    throw new Error(
+      `Réponse serveur invalide (${res.status}). ${preview || 'Corps vide.'}`
+    );
+  }
 
   if (!res.ok) {
     const msg =
