@@ -1,5 +1,6 @@
 module.exports = function (api) {
-  api.cache(true);
+  // false : react-native-dotenv doit relire .env après changement d’API_URL
+  api.cache(false);
   return {
     presets: ['babel-preset-expo'],
     plugins: [
@@ -23,6 +24,7 @@ module.exports = function (api) {
             '@constants': './src/constants',
             '@models': './src/models',
             '@contexts': './src/contexts',
+            '@config': './src/config',
           },
         },
       ],

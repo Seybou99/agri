@@ -1,65 +1,80 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    function isSignedIn() {
+      return request.auth != null;
     }
 
+    function userDocPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function userExists() {
+      return isSignedIn() && exists(userDocPath());
+    }
+
+    // Sans exists(), un get() sur un profil manquant fait échouer toute la règle (y compris les OR).
     function userRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return userExists() ? get(userDocPath()).data.role : '';
+    }
+
+    function isAdmin() {
+      return userRole() == 'administrateur';
     }
 
     function isSellerOrAdmin() {
-      return request.auth != null
-        && userRole() in ['agriculteur', 'administrateur'];
+      return userRole() in ['agriculteur', 'administrateur'];
+    }
+
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /products/{productId} {
       allow read: if true;
       allow create: if isSellerOrAdmin()
         && request.resource.data.farmerId == request.auth.uid;
-      allow update, delete: if request.auth != null
-        && (resource.data.farmerId == request.auth.uid || userRole() == 'administrateur');
+      allow update, delete: if isSignedIn()
+        && (resource.data.farmerId == request.auth.uid || isAdmin());
     }
 
     match /academy_guides/{guideId} {
       allow read: if true;
       allow create: if isSellerOrAdmin()
         && request.resource.data.sellerId == request.auth.uid;
-      allow update, delete: if request.auth != null
-        && (resource.data.sellerId == request.auth.uid || userRole() == 'administrateur');
+      allow update, delete: if isSignedIn()
+        && (resource.data.sellerId == request.auth.uid || isAdmin());
     }
 
     match /academy_guide_content/{guideId} {
       allow read: if true;
       allow create: if isSellerOrAdmin()
         && request.resource.data.sellerId == request.auth.uid;
-      allow update, delete: if request.auth != null
-        && (resource.data.sellerId == request.auth.uid || userRole() == 'administrateur');
+      allow update, delete: if isSignedIn()
+        && (resource.data.sellerId == request.auth.uid || isAdmin());
     }
 
     match /academy_orders/{orderId} {
-      allow read: if request.auth != null
-        && (resource.data.buyerId == request.auth.uid
-            || resource.data.sellerId == request.auth.uid
-            || userRole() == 'administrateur');
-      allow create: if request.auth != null
+      allow read: if isSignedIn() && resource.data.buyerId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.sellerId == request.auth.uid;
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
         && request.resource.data.buyerId == request.auth.uid;
     }
 
     match /marketplace_orders/{orderId} {
-      allow read: if request.auth != null
-        && (resource.data.buyerId == request.auth.uid || userRole() == 'administrateur');
-      allow create: if request.auth != null
+      allow read: if isSignedIn() && resource.data.buyerId == request.auth.uid;
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
         && request.resource.data.buyerId == request.auth.uid;
     }
 
     match /marketplace_sales/{saleId} {
-      allow read: if request.auth != null
-        && (resource.data.sellerId == request.auth.uid
-            || resource.data.buyerId == request.auth.uid
-            || userRole() == 'administrateur');
-      allow create: if request.auth != null
+      allow read: if isSignedIn() && resource.data.sellerId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.buyerId == request.auth.uid;
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
         && request.resource.data.buyerId == request.auth.uid;
     }
   }

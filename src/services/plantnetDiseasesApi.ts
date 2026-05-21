@@ -4,15 +4,8 @@
  * @see https://crop.kindwise.com/docs
  */
 
-import { API_URL } from 'react-native-dotenv';
+import { getApiBaseUrl } from '@config/apiBase';
 import type { PlantDiseaseIdentifyResult, PlantDiseaseMatch } from '@models/PlantDisease';
-
-function getApiBase(): string | null {
-  const url = typeof API_URL === 'string' && API_URL && !API_URL.includes('example.com')
-    ? API_URL.trim()
-    : null;
-  return url ? url.replace(/\/$/, '') : null;
-}
 
 export interface DiseaseImagePayload {
   base64: string;
@@ -22,7 +15,7 @@ export interface DiseaseImagePayload {
 export async function identifyPlantDiseases(
   images: DiseaseImagePayload[]
 ): Promise<PlantDiseaseIdentifyResult> {
-  const base = getApiBase();
+  const base = getApiBaseUrl();
   if (!base) {
     throw new Error(
       'Configurez API_URL dans .env (URL Vercel) pour activer le diagnostic maladies.'
@@ -47,10 +40,11 @@ export async function identifyPlantDiseases(
     if (
       res.status === 404 &&
       (preview.toLowerCase().includes('not_found') ||
-        preview.toLowerCase().includes('could not be found'))
+        preview.toLowerCase().includes('could not be found') ||
+        preview.toLowerCase().includes('deployment'))
     ) {
       throw new Error(
-        'Le diagnostic maladies n’est pas disponible sur le serveur. Redéployez l’API Vercel (dernière version du projet).'
+        'Mauvaise URL API (vérifiez API_URL dans .env et .env.local : https://agri-ruddy.vercel.app). Puis relancez : npx expo start --clear'
       );
     }
     throw new Error(

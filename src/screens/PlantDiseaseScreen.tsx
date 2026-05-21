@@ -41,19 +41,27 @@ export const PlantDiseaseScreen: React.FC = () => {
   const [quotaLeft, setQuotaLeft] = useState<number | undefined>();
   const [provider, setProvider] = useState<PlantDiseaseProvider | undefined>();
   const [fallbackUsed, setFallbackUsed] = useState(false);
+  /** Bloque une nouvelle analyse tant que les photos n’ont pas changé (économie quota API). */
+  const [analysisLocked, setAnalysisLocked] = useState(false);
+
+  const resetForNewPhotos = () => {
+    setAnalysisLocked(false);
+    setResults(null);
+    setProvider(undefined);
+    setFallbackUsed(false);
+  };
 
   const addPhoto = (capture: PlantPhotoCapture) => {
     setPhotos((prev) => {
       if (prev.length >= MAX_PLANT_DISEASE_IMAGES) return prev;
       return [...prev, { ...capture, id: `${Date.now()}_${prev.length}` }];
     });
-    setResults(null);
+    resetForNewPhotos();
   };
 
   const removePhoto = (id: string) => {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
-    setResults(null);
-    setProvider(undefined);
+    resetForNewPhotos();
   };
 
   const handleCamera = async () => {
@@ -75,6 +83,7 @@ export const PlantDiseaseScreen: React.FC = () => {
   };
 
   const handleAnalyze = async () => {
+    if (loading || analysisLocked) return;
     if (photos.length === 0) {
       Alert.alert('Photo requise', 'Prenez au moins une photo claire de la plante malade.');
       return;
@@ -87,6 +96,7 @@ export const PlantDiseaseScreen: React.FC = () => {
       setResults(data.results);
       setProvider(data.provider);
       setFallbackUsed(Boolean(data.fallbackUsed));
+      setAnalysisLocked(true);
       setQuotaLeft(
         data.provider === 'kindwise'
           ? data.remainingCredits
@@ -95,7 +105,7 @@ export const PlantDiseaseScreen: React.FC = () => {
       if (data.results.length === 0) {
         Alert.alert(
           'Aucun résultat',
-          `${getProviderLabel(data.provider)} n’a pas reconnu de maladie. Essayez une photo plus nette.`
+          `${getProviderLabel(data.provider)} n’a pas reconnu de maladie. Ajoutez ou remplacez la photo pour réessayer.`
         );
       }
     } catch (e) {
@@ -106,6 +116,13 @@ export const PlantDiseaseScreen: React.FC = () => {
   };
 
   const formatScore = (score: number) => `${Math.round(score * 100)} %`;
+
+  const canAnalyze = photos.length > 0 && !loading && !analysisLocked;
+  const analyzeButtonTitle = loading
+    ? 'Analyse en cours…'
+    : analysisLocked
+      ? 'Analyse effectuée'
+      : 'Analyser la maladie';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -159,11 +176,17 @@ export const PlantDiseaseScreen: React.FC = () => {
         </View>
 
         <Button
-          title={loading ? 'Analyse en cours…' : 'Analyser la maladie'}
+          title={analyzeButtonTitle}
           onPress={handleAnalyze}
           loading={loading}
+          disabled={!canAnalyze}
           fullWidth
         />
+        {analysisLocked && !loading && (
+          <Text style={styles.analyzeHint}>
+            1 analyse = 1 crédit API. Ajoutez ou remplacez une photo pour relancer.
+          </Text>
+        )}
 
         {provider && (
           <View style={[styles.providerBadge, fallbackUsed && styles.providerBadgeFallback]}>
@@ -313,6 +336,13 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: spacing.sm,
+  },
+  analyzeHint: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    lineHeight: 18,
   },
   loadingBox: { alignItems: 'center', padding: spacing.xl },
   loadingText: { marginTop: spacing.md, color: colors.text.secondary },

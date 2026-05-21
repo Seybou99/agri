@@ -1,6 +1,40 @@
-agri-web
-.next
+# Déploiement Vercel = API uniquement (pas l'app Expo/React Native)
 node_modules
 .expo
+.expo-shared
 dist
 build
+web-build
+.next
+agri-web
+
+# Natif mobile (milliers de fichiers — cause l'erreur 15000 items)
+ios
+android
+
+# Code app mobile (inutile pour les fonctions /api)
+src
+assets
+App.tsx
+index.ts
+app.json
+app.config.*
+babel.config.js
+metro.config.js
+tsconfig.app.json
+eas.json
+
+# Autres dossiers lourards
+functions
+docs
+scripts
+keys
+coverage
+.git
+*.log
+.DS_Store
+
+# Secrets locaux (variables sur le dashboard Vercel)
+.env
+.env.local
+.env.*.local

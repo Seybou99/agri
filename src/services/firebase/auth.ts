@@ -228,7 +228,8 @@ class AuthServiceImpl implements AuthService {
       const snap = await getDoc(doc(db, USERS_COLLECTION, uid));
       if (!snap.exists()) return null;
       return mapFirestoreUser(uid, snap.data() as Record<string, unknown>);
-    } catch {
+    } catch (e) {
+      console.warn('[Auth] Lecture profil Firestore:', e);
       return null;
     }
   }
