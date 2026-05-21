@@ -7,9 +7,24 @@ const ISDA_BASE = 'https://api.isda-africa.com';
 const ISDA_LOGIN_URL = `${ISDA_BASE}/login`;
 const ISDA_SOIL_URL = `${ISDA_BASE}/isdasoil/v2/soilproperty`;
 
+/** JWT iSDA valide 60 min — on renouvelle à 55 min pour marge de sécurité. */
+const ISDA_TOKEN_TTL_MS = 55 * 60 * 1000;
+
 let cachedAccessToken: string | null = null;
 let cachedTokenExpiry = 0;
 let cachedCredentialsKey = '';
+
+/** Unités officielles (GET /isdasoil/v2/layers) — valeurs numériques passées telles quelles dans SoilData. */
+const ISDA_EXPECTED_UNITS: Partial<Record<string, string>> = {
+  nitrogen_total: 'g/kg',
+  carbon_organic: 'g/kg',
+  carbon_total: 'g/kg',
+  clay_content: '%',
+  sand_content: '%',
+  silt_content: '%',
+  phosphorous_extractable: 'ppm',
+  potassium_extractable: 'ppm',
+};
 
 /** Noms des propriétés iSDAsoil v2 (query `property` ou clés dans la réponse). */
 export const ISDA_PROPERTY_KEYS = {
@@ -64,13 +79,28 @@ const DEFAULT_SOIL: SoilDataPayload = {
   silt: 40,
 };
 
-/** Extrait la première valeur numérique d'une propriété iSDA. */
+/** Extrait la première valeur numérique d'une propriété iSDA (sans conversion d'unité). */
 export function getIsdaPropertyValue(data: IsdaSoilApiResponse, propertyKey: string): number | null {
   const entries = data.property?.[propertyKey];
   if (!Array.isArray(entries) || entries.length === 0) return null;
-  const raw = entries[0]?.value?.value;
+
+  const entry = entries[0];
+  const expectedUnit = ISDA_EXPECTED_UNITS[propertyKey];
+  const apiUnit = entry?.value?.unit?.trim() || null;
+  if (expectedUnit && apiUnit && apiUnit !== expectedUnit) {
+    console.warn(
+      `iSDA ${propertyKey}: unité API "${apiUnit}" ≠ attendue "${expectedUnit}" — valeur conservée telle quelle`
+    );
+  }
+
+  const raw = entry?.value?.value;
   const n = typeof raw === 'number' ? raw : Number(raw);
   return Number.isNaN(n) ? null : n;
+}
+
+function invalidateIsdaToken(): void {
+  cachedAccessToken = null;
+  cachedTokenExpiry = 0;
 }
 
 /** Classification texture USDA (partagée app + backend). */
@@ -96,7 +126,9 @@ export function mapIsdaResponseToSoilData(data: IsdaSoilApiResponse): SoilDataPa
     clay,
     sand,
     silt,
+    // carbon_organic : g/kg (iSDA) → SoilData.organicCarbon (g/kg)
     organicCarbon: getIsdaPropertyValue(data, K.organicCarbon) ?? DEFAULT_SOIL.organicCarbon,
+    // nitrogen_total : g/kg (iSDA) → SoilData.nitrogen (g/kg), pas de division comme GEE/SoilGrids
     nitrogen: getIsdaPropertyValue(data, K.nitrogen) ?? DEFAULT_SOIL.nitrogen,
     phosphorus: getIsdaPropertyValue(data, K.phosphorus) ?? DEFAULT_SOIL.phosphorus,
     potassium: getIsdaPropertyValue(data, K.potassium) ?? DEFAULT_SOIL.potassium,
@@ -104,9 +136,18 @@ export function mapIsdaResponseToSoilData(data: IsdaSoilApiResponse): SoilDataPa
   };
 }
 
-async function getIsdaAccessToken(username: string, password: string): Promise<string> {
+/**
+ * JWT en cache module (Vercel : réutilisé entre requêtes sur la même instance chaude).
+ * Avant chaque soilproperty : token valide ou nouveau login.
+ */
+async function getIsdaAccessToken(username: string, password: string, forceRefresh = false): Promise<string> {
   const credKey = `${username}::${password.length}`;
-  if (cachedAccessToken && Date.now() < cachedTokenExpiry && cachedCredentialsKey === credKey) {
+  if (
+    !forceRefresh &&
+    cachedAccessToken &&
+    Date.now() < cachedTokenExpiry &&
+    cachedCredentialsKey === credKey
+  ) {
     return cachedAccessToken;
   }
 
@@ -135,9 +176,32 @@ async function getIsdaAccessToken(username: string, password: string): Promise<s
   }
 
   cachedAccessToken = data.access_token;
-  cachedTokenExpiry = Date.now() + 55 * 60 * 1000;
+  cachedTokenExpiry = Date.now() + ISDA_TOKEN_TTL_MS;
   cachedCredentialsKey = credKey;
   return cachedAccessToken;
+}
+
+async function fetchIsdaSoilProperty(
+  lat: number,
+  lng: number,
+  token: string
+): Promise<{ ok: boolean; status: number; data: IsdaSoilApiResponse | null }> {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lng),
+    depth: '0-20',
+  });
+  const res = await fetch(`${ISDA_SOIL_URL}?${params.toString()}`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    return { ok: false, status: res.status, data: null };
+  }
+  const data = (await res.json()) as IsdaSoilApiResponse;
+  return { ok: true, status: res.status, data };
 }
 
 /**
@@ -149,25 +213,24 @@ export async function fetchIsdaSoilAtPoint(
   username: string,
   password: string
 ): Promise<SoilDataPayload | null> {
+  const user = username.trim();
   try {
-    const token = await getIsdaAccessToken(username.trim(), password);
-    const params = new URLSearchParams({
-      lat: String(lat),
-      lon: String(lng),
-      depth: '0-20',
-    });
-    const res = await fetch(`${ISDA_SOIL_URL}?${params.toString()}`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (!res.ok) {
-      console.warn(`iSDA soilproperty ${res.status}`);
+    let token = await getIsdaAccessToken(user, password);
+    let result = await fetchIsdaSoilProperty(lat, lng, token);
+
+    // Token expiré côté serveur iSDA : invalider le cache et réessayer une fois
+    if (!result.ok && result.status === 401) {
+      invalidateIsdaToken();
+      token = await getIsdaAccessToken(user, password, true);
+      result = await fetchIsdaSoilProperty(lat, lng, token);
+    }
+
+    if (!result.ok) {
+      console.warn(`iSDA soilproperty ${result.status}`);
       return null;
     }
-    const data = (await res.json()) as IsdaSoilApiResponse;
-    if (!data.property || Object.keys(data.property).length === 0) {
+    const data = result.data;
+    if (!data?.property || Object.keys(data.property).length === 0) {
       return null;
     }
     return mapIsdaResponseToSoilData(data);

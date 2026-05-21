@@ -9,10 +9,10 @@ const SOILGRIDS_REST_AVAILABLE = false;
 export interface SoilData {
   ph: number;
   texture: string;
-  organicCarbon: number; // %
-  nitrogen: number; // g/kg
-  phosphorus: number; // mg/kg
-  potassium: number; // cmol/kg
+  organicCarbon: number; // g/kg (iSDA carbon_organic) — affichage UI peut indiquer « % C » à clarifier
+  nitrogen: number; // g/kg (iSDA nitrogen_total, inchangé)
+  phosphorus: number; // ppm via iSDA phosphorous_extractable
+  potassium: number; // ppm via iSDA potassium_extractable
   clay: number; // %
   sand: number; // %
   silt: number; // %

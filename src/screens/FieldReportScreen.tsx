@@ -92,7 +92,7 @@ function buildKpis(
       : '—';
 
   const oc = soil?.organicCarbon;
-  const organicValue = oc != null ? `${formatDecimalFr(oc)} % C organique` : '—';
+  const organicValue = oc != null ? `${formatDecimalFr(oc)} g/kg C organique` : '—';
 
   return [
     { id: 'moisture', label: 'Humidité', value: moistureValue, icon: '💧' },
