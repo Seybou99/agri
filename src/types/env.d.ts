@@ -22,4 +22,8 @@ declare module 'react-native-dotenv' {
   // Google Earth Engine (backend / Cloud Functions)
   export const GOOGLE_APPLICATION_CREDENTIALS: string;
   export const GEE_PROJECT_ID: string;
+
+  /** iSDAsoil — secours appel direct si proxy Vercel indisponible (préférer proxy en prod) */
+  export const ISDA_USERNAME: string;
+  export const ISDA_PASSWORD: string;
 }

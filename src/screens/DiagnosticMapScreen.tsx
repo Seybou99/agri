@@ -171,6 +171,18 @@ export const DiagnosticMapScreen: React.FC = () => {
         )}
       </MapView>
 
+      {navigation.canGoBack?.() ? (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={[styles.floatingBackBtn, { top: (insets.top || 20) + spacing.sm }]}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Retour"
+        >
+          <Text style={styles.backLabel}>← Retour</Text>
+        </TouchableOpacity>
+      ) : null}
+
       {/* Bouton flottant "Je suis ici" — un tap = position GPS + centrage (Phase 0 UX inclusive) */}
       <TouchableOpacity
         style={[styles.floatingMyPositionBtn, { top: (insets.top || 20) + spacing.sm }]}
@@ -205,12 +217,6 @@ export const DiagnosticMapScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {navigation.canGoBack?.() ? (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-              <Text style={styles.backLabel}>← Retour</Text>
-            </TouchableOpacity>
-          ) : null}
-
           <Text style={styles.title}>Sélection du terrain</Text>
           <Text style={styles.subtitle}>Lieu, GPS, X/Y (plan) ou ma position</Text>
 
@@ -358,8 +364,26 @@ const styles = StyleSheet.create({
   },
   scroll: { maxHeight: 340 },
   scrollContent: { paddingBottom: spacing.lg },
-  backBtn: { alignSelf: 'flex-start', marginBottom: spacing.sm },
-  backLabel: { fontSize: typography.body.fontSize, fontWeight: '600', color: colors.primary },
+  backLabel: { fontSize: typography.body.fontSize, fontWeight: '600', color: colors.error },
+  floatingBackBtn: {
+    position: 'absolute',
+    left: spacing.md,
+    zIndex: 10,
+    minHeight: 48,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   title: { fontSize: typography.h3.fontSize, fontWeight: typography.h3.fontWeight, color: colors.text.primary, marginBottom: spacing.xs },
   subtitle: { fontSize: typography.bodySmall.fontSize, color: colors.text.secondary, marginBottom: spacing.md },
   tabs: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },

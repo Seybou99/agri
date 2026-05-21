@@ -21,7 +21,9 @@ export const KPICard: React.FC<KPICardProps> = ({ data, style }) => (
   <View style={[styles.card, style]}>
     <Text style={styles.icon}>{data.icon}</Text>
     <Text style={styles.label}>{data.label}</Text>
-    <Text style={styles.value}>{data.value}</Text>
+    <Text style={styles.value} numberOfLines={3}>
+      {data.value}
+    </Text>
   </View>
 );
 
@@ -49,8 +51,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   value: {
-    fontSize: typography.body.fontSize,
+    fontSize: typography.bodySmall.fontSize,
     fontWeight: '600',
     color: colors.text.primary,
+    lineHeight: 20,
   },
 });

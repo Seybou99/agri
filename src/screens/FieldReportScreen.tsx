@@ -22,6 +22,7 @@ import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
 import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
+import { isDefaultSoilData, type SoilData } from '@services/agronomy/soilService';
 import { useRecommendationsFromApi } from '../hooks/useRecommendationsFromApi';
 import { useProfitabilityFromApi } from '../hooks/useProfitabilityFromApi';
 import { useCalendarGuideData } from '../hooks/useCalendarGuideData';
@@ -47,12 +48,21 @@ type FieldReportParams = {
   locationName?: string;
 };
 
+function formatDecimalFr(n: number, digits = 1): string {
+  return n.toFixed(digits).replace('.', ',');
+}
+
+function formatTextureLabel(texture: string): string {
+  const t = texture.trim();
+  if (!t) return '—';
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 function buildKpis(
-  soil: { ph: number; organicCarbon: number; nitrogen: number; phosphorus: number; potassium: number } | null,
+  soil: SoilData | null,
   climate: { averageTemperature: number; annualRainfall: number } | null,
   agroData?: { humidity?: number; temp?: number } | null
 ): KPICardData[] {
-  const ph = soil?.ph ?? 6.5;
   const temp = climate?.averageTemperature ?? 28;
   const rainRaw = climate?.annualRainfall ?? 800;
   const rain = rainRaw > 0 ? rainRaw : 800;
@@ -67,17 +77,30 @@ function buildKpis(
     agroData?.temp != null
       ? `${temp} °C • ${agroData.temp} °C (Agro)`
       : `${temp} °C`;
-  const n = soil?.nitrogen ?? 0.5;
-  const oc = soil?.organicCarbon ?? 1;
-  let nutrientsLabel = 'Moyen';
-  if (oc < 0.5 || n < 0.3) nutrientsLabel = 'Faible';
-  else if (oc > 1.5 && n > 0.8) nutrientsLabel = 'Élevé';
+
+  const ph = soil?.ph;
+  const phValue = ph != null ? formatDecimalFr(ph) : '—';
+
+  const textureValue = soil?.texture ? formatTextureLabel(soil.texture) : '—';
+
+  const clay = soil?.clay;
+  const sand = soil?.sand;
+  const silt = soil?.silt;
+  const compositionValue =
+    clay != null && sand != null && silt != null
+      ? `Argile ${Math.round(clay)} % · Sable ${Math.round(sand)} % · Limon ${Math.round(silt)} %`
+      : '—';
+
+  const oc = soil?.organicCarbon;
+  const organicValue = oc != null ? `${formatDecimalFr(oc)} % C organique` : '—';
 
   return [
     { id: 'moisture', label: 'Humidité', value: moistureValue, icon: '💧' },
     { id: 'temp', label: 'Température', value: tempValue, icon: '🌡️' },
-    { id: 'ph', label: 'pH', value: ph.toFixed(1).replace('.', ','), icon: 'pH' },
-    { id: 'nutrients', label: 'Nutriments', value: nutrientsLabel, icon: '🍃' },
+    { id: 'ph', label: 'pH', value: phValue, icon: 'pH' },
+    { id: 'texture', label: 'Texture', value: textureValue, icon: '🌍' },
+    { id: 'composition', label: 'Type de sol', value: compositionValue, icon: '⛰️' },
+    { id: 'organic', label: 'Organique', value: organicValue, icon: '🍃' },
   ];
 }
 
@@ -315,10 +338,27 @@ export const FieldReportScreen: React.FC = () => {
 
         {showOverviewContent && (
           <>
+            <Text style={styles.kpiSectionTitle}>Climat</Text>
             <View style={styles.kpiGrid}>
-              {kpis.map((kpi) => (
-                <KPICard key={kpi.id} data={kpi} />
-              ))}
+              {kpis
+                .filter((k) => k.id === 'moisture' || k.id === 'temp')
+                .map((kpi) => (
+                  <KPICard key={kpi.id} data={kpi} />
+                ))}
+            </View>
+            <Text style={styles.kpiSectionTitle}>Sol (iSDAsoil)</Text>
+            {soil != null && isDefaultSoilData(soil) && (
+              <Text style={styles.kpiSoilHint}>
+                Données estimées (identiques pour toutes les parcelles). Vérifiez ISDA_USERNAME et ISDA_PASSWORD
+                dans .env, puis relancez Expo avec npx expo start --clear.
+              </Text>
+            )}
+            <View style={styles.kpiGrid}>
+              {kpis
+                .filter((k) => k.id === 'ph' || k.id === 'texture' || k.id === 'composition' || k.id === 'organic')
+                .map((kpi) => (
+                  <KPICard key={kpi.id} data={kpi} />
+                ))}
             </View>
             <YieldCard
               data={yieldData}
@@ -426,6 +466,20 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
   content: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
+  kpiSectionTitle: {
+    fontSize: typography.bodySmall.fontSize,
+    fontWeight: '700',
+    color: colors.text.secondary,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  kpiSoilHint: {
+    fontSize: typography.caption.fontSize,
+    color: colors.text.secondary,
+    marginBottom: spacing.sm,
+    lineHeight: 18,
+  },
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

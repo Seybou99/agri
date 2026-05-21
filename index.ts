@@ -1,16 +1,17 @@
-// Réduire le bruit en dev : masquer l'erreur "disableEventLoopOnBridgeless" (non bloquante)
+// Masquer en dev l'avertissement RN "disableEventLoopOnBridgeless" (souvent non bloquant, décalage runtime)
 if (typeof __DEV__ !== 'undefined' && __DEV__) {
   const originalError = console.error;
+  const isBridgelessNoise = (args: unknown[]) => {
+    const text = args.map((a) => (a instanceof Error ? a.message : String(a ?? ''))).join(' ');
+    return (
+      text.includes('disableEventLoopOnBridgeless') ||
+      text.includes('Could not access feature flag') ||
+      text.includes('[runtime not ready]') ||
+      text.includes('native module method was not available')
+    );
+  };
   console.error = (...args: unknown[]) => {
-    const msg = String(args[0] ?? '');
-    if (
-      msg.includes('Could not access feature flag') ||
-      msg.includes('disableEventLoopOnBridgeless') ||
-      msg.includes('[runtime not ready]') ||
-      msg.includes('native module method was not available')
-    ) {
-      return;
-    }
+    if (isBridgelessNoise(args)) return;
     originalError.apply(console, args);
   };
 }

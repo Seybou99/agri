@@ -1,8 +1,8 @@
-// Service pour récupérer les données de sol : ISRIC SoilGrids REST ou Google Earth Engine (API Vercel).
-// Doc : https://www.isric.org/explore/soilgrids/faq-soilgrids, docs/EARTH_ENGINE_SETUP.md
-//
-// Ordre de priorité : 1) REST SoilGrids si rétabli, 2) API backend /api/getSoilFromGEE (GEE), 3) DEFAULT_SOIL.
-import { API_URL } from 'react-native-dotenv';
+// Service pour récupérer les données de sol.
+// Priorité : 1) iSDA via Vercel, 2) iSDA direct (app, si identifiants .env), 3) GEE, 4) SoilGrids REST, 5) défaut.
+// Doc : docs/APIS_DONNEES.md, cahier_de_api.md, docs/EARTH_ENGINE_SETUP.md
+import { API_URL, ISDA_USERNAME, ISDA_PASSWORD } from 'react-native-dotenv';
+import { determineSoilTexture, fetchIsdaSoilAtPoint, normalizeBackendSoilPayload } from './isdasoil';
 
 const SOILGRIDS_REST_AVAILABLE = false;
 
@@ -18,7 +18,8 @@ export interface SoilData {
   silt: number; // %
 }
 
-const DEFAULT_SOIL: SoilData = {
+/** Valeurs de secours quand iSDA / GEE / SoilGrids sont indisponibles (une seule source de vérité). */
+export const DEFAULT_SOIL: SoilData = {
   ph: 6.5,
   texture: 'limoneux',
   organicCarbon: 1.0,
@@ -30,6 +31,18 @@ const DEFAULT_SOIL: SoilData = {
   silt: 40,
 };
 
+/** True si l’app affiche encore le secours (API sol non joignable ou non déployée). */
+export function isDefaultSoilData(soil: SoilData): boolean {
+  return (
+    soil.ph === DEFAULT_SOIL.ph &&
+    soil.texture === DEFAULT_SOIL.texture &&
+    soil.clay === DEFAULT_SOIL.clay &&
+    soil.sand === DEFAULT_SOIL.sand &&
+    soil.silt === DEFAULT_SOIL.silt &&
+    soil.organicCarbon === DEFAULT_SOIL.organicCarbon
+  );
+}
+
 /** Couche SoilGrids : format properties[] ou layers[] */
 type SoilGridsLayer = {
   name?: string;
@@ -37,11 +50,6 @@ type SoilGridsLayer = {
   values?: number[] | { mean?: number[] };
 };
 
-/**
- * Extrait la valeur mean d'une couche (format properties ou layers).
- * - values: number[] → values[0]
- * - values: { mean: number[] } → values.mean[0]
- */
 function extractLayerValue(layer: SoilGridsLayer): number | null {
   const v = layer.values;
   if (!v) return null;
@@ -59,53 +67,55 @@ function extractLayerValue(layer: SoilGridsLayer): number | null {
 
 const USER_AGENT = 'SeneGundo/1.0 (agri-mali; +https://github.com)';
 
-/** Base URL de l'API (Vercel) pour appeler /api/getSoilFromGEE — uniquement côté app. */
 function getApiBaseUrl(): string | null {
   const url = typeof API_URL === 'string' && API_URL && !API_URL.includes('example.com') ? API_URL.trim() : null;
   return url ? url.replace(/\/$/, '') : null;
 }
 
+async function fetchSoilFromBackend(path: string, lat: number, lng: number): Promise<SoilData | null> {
+  const baseUrl = getApiBaseUrl();
+  if (!baseUrl) return null;
+  try {
+    const url = `${baseUrl}${path}?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return normalizeBackendSoilPayload(data);
+  } catch (e) {
+    console.warn(`${path} (app):`, e);
+    return null;
+  }
+}
+
 /**
  * Récupère les données de sol pour une coordonnée donnée.
- * 1) Si SOILGRIDS_REST_AVAILABLE : appelle rest.isric.org.
- * 2) Sinon : appelle l'API backend /api/getSoilFromGEE (Google Earth Engine) si API_URL est configurée.
- * 3) Sinon : retourne DEFAULT_SOIL.
+ * 1) iSDAsoil via /api/getSoilFromISDA (Vercel)
+ * 2) iSDAsoil direct (si ISDA_USERNAME / ISDA_PASSWORD dans .env)
+ * 3) Google Earth Engine via /api/getSoilFromGEE
+ * 4) SoilGrids REST si rétabli
+ * 5) DEFAULT_SOIL
  */
 export async function fetchSoilData(lat: number, lng: number): Promise<SoilData> {
-  if (SOILGRIDS_REST_AVAILABLE) {
-    return fetchSoilFromRest(lat, lng);
+  const fromIsdaProxy = await fetchSoilFromBackend('/api/getSoilFromISDA', lat, lng);
+  if (fromIsdaProxy) return fromIsdaProxy;
+
+  const isdaUser = typeof ISDA_USERNAME === 'string' ? ISDA_USERNAME.trim() : '';
+  const isdaPass = typeof ISDA_PASSWORD === 'string' ? ISDA_PASSWORD.trim() : '';
+  if (isdaUser && isdaPass) {
+    const fromIsdaDirect = await fetchIsdaSoilAtPoint(lat, lng, isdaUser, isdaPass);
+    if (fromIsdaDirect) return fromIsdaDirect;
   }
 
-  const baseUrl = getApiBaseUrl();
-  if (baseUrl) {
-    try {
-      const url = `${baseUrl}/api/getSoilFromGEE?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && typeof data.ph === 'number') {
-          return {
-            ph: data.ph,
-            texture: data.texture ?? DEFAULT_SOIL.texture,
-            organicCarbon: data.organicCarbon ?? DEFAULT_SOIL.organicCarbon,
-            nitrogen: data.nitrogen ?? DEFAULT_SOIL.nitrogen,
-            phosphorus: data.phosphorus ?? DEFAULT_SOIL.phosphorus,
-            potassium: data.potassium ?? DEFAULT_SOIL.potassium,
-            clay: data.clay ?? DEFAULT_SOIL.clay,
-            sand: data.sand ?? DEFAULT_SOIL.sand,
-            silt: data.silt ?? DEFAULT_SOIL.silt,
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('getSoilFromGEE (app):', e);
-    }
+  const fromGee = await fetchSoilFromBackend('/api/getSoilFromGEE', lat, lng);
+  if (fromGee) return fromGee;
+
+  if (SOILGRIDS_REST_AVAILABLE) {
+    return fetchSoilFromRest(lat, lng);
   }
 
   return Promise.resolve(DEFAULT_SOIL);
 }
 
-/** Appel direct REST SoilGrids (quand SOILGRIDS_REST_AVAILABLE = true). */
 async function fetchSoilFromRest(lat: number, lng: number): Promise<SoilData> {
   const baseUrl = 'https://rest.isric.org/soilgrids/v2.0/properties/query';
   const properties = ['phh2o', 'clay', 'sand'];
@@ -166,22 +176,4 @@ async function fetchSoilFromRest(lat: number, lng: number): Promise<SoilData> {
   }
 }
 
-/**
- * Détermine la texture du sol basée sur les pourcentages de sable, argile et limon
- */
-function determineSoilTexture(sand: number, clay: number, silt: number): string {
-  // Classification selon le triangle de texture USDA
-  if (sand > 70 && clay < 20) {
-    return 'sableux';
-  }
-  if (clay > 40) {
-    return 'argileux';
-  }
-  if (sand > 50 && sand < 70 && clay < 20) {
-    return 'limono-sableux';
-  }
-  if (silt > 50) {
-    return 'limoneux';
-  }
-  return 'limoneux'; // Par défaut
-}
+export { determineSoilTexture };
