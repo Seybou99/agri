@@ -1,0 +1,72 @@
+/**
+ * Soninké (Sarakollé) — parlé dans l'ouest du Mali (Kayes, Yelimané…)
+ */
+import type { Translations } from './types';
+import fr from './fr';
+
+const snk: Translations = {
+  ...fr,
+  common: {
+    ...fr.common,
+    cancel: 'Fanta',
+    confirm: 'Awa',
+    save: 'Jaabu',
+    delete: 'Bari',
+    back: 'Sere',
+    yes: 'Nto',
+    no: 'Ayi',
+    loading: 'Taaxu…',
+    error: 'Toxo',
+    success: 'Nta ke',
+    comingSoon: 'Ke wara',
+    comingSoonMsg: 'Wure xaranme ke wara version korolanin.',
+  },
+  profile: {
+    ...fr.profile,
+    title: 'N ka profil',
+    notConnected: 'Ma don',
+    notConnectedMsg: 'Don i xa sɔrɔ i ka profil, rapori ani commande.',
+    signIn: 'Don',
+    createAccount: 'Compte kura ke',
+    sectionAgricultural: 'Foro',
+    sectionMarket: 'Luuma',
+    sectionAcademy: 'Kalanso',
+    sectionAccount: 'Compte',
+    myReports: 'N ka raporw',
+    myReportsSubtitle: 'Diagnostik sunundaa · Internet ma sɔrɔ',
+    myCart: 'N ka panier',
+    myPurchases: 'N sara fɛn',
+    mySales: 'N ci fɛn',
+    settings: 'Ɲɛtaa',
+    settingsSubtitle: 'Ɲɛtaa, kunnafoni, tunga',
+    signOut: 'Bɔ',
+    signOutConfirmTitle: 'Bɔ',
+    signOutConfirmMsg: 'I b\'a fɛ ka bɔ tiɲɛ?',
+    statPurchases: 'Sarali',
+    statSales: 'Ci',
+    statCart: 'Panier',
+  },
+  settings: {
+    ...fr.settings,
+    title: 'Ɲɛtaa',
+    sectionAccount: 'N ka compte',
+    editProfile: 'Profil yɛlɛma',
+    changePassword: 'Gundo sɛbɛn yɛlɛma',
+    language: 'Tuŋa',
+    sectionNotifications: 'Kunnafoniw',
+    notifWeather: 'Fɛɛrɛ kunnafoni',
+    notifDiagnostic: 'Diagnostik hakili',
+    notifMarket: 'Luuma kunnafoni',
+    sectionApp: 'App',
+    offlineMode: 'Internet tɛ mode',
+    surfaceUnit: 'Foro jɔnjɔn',
+    clearCache: 'Cache bɔ',
+    clearCacheSub: 'Wɛrɛw halɛ',
+    sectionAbout: 'Ko a kan',
+    appVersion: 'App version',
+    contactSupport: 'Dɛmɛ ɲini',
+    contactSupportSub: 'support@senegundo.com',
+  },
+};
+
+export default snk;

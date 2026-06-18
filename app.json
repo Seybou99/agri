@@ -66,6 +66,12 @@
           "iCloudContainerEnvironment": "Production"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "appVariant": "agriculteur",
+      "eas": {
+        "projectId": "c2f2695e-65a8-45ec-93ee-a41c59a0d535"
+      }
+    }
   }
 }

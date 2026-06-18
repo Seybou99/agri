@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { colors, spacing, typography } from '@theme';
-import type { TemperatureDataPoint } from '@types/weather';
+import type { TemperatureDataPoint } from '../../types/weather';
 
 interface TemperatureChartProps {
   data: TemperatureDataPoint[];

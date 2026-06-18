@@ -26,7 +26,9 @@
       "@models": ["./src/models"],
       "@models/*": ["./src/models/*"],
       "@contexts": ["./src/contexts"],
-      "@contexts/*": ["./src/contexts/*"]
+      "@contexts/*": ["./src/contexts/*"],
+      "@client": ["./src/client"],
+      "@client/*": ["./src/client/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

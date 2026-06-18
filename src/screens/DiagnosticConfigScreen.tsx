@@ -236,7 +236,6 @@ export const DiagnosticConfigScreen: React.FC = () => {
                       style={[styles.cropItem, isSelected && styles.cropItemSelected]}
                       onPress={() => toggleCrop(c.id)}
                       activeOpacity={0.7}
-                      minHeight={MIN_TOUCH_SIZE}
                     >
                       <Text style={styles.cropIcon}>{c.emoji}</Text>
                       <Text style={[styles.cropLabel, isSelected && styles.cropLabelSelected]} numberOfLines={1}>
@@ -261,7 +260,6 @@ export const DiagnosticConfigScreen: React.FC = () => {
                 style={[styles.surfaceBtn, surfacePreset === preset.id && styles.surfaceBtnSelected]}
                 onPress={() => selectSurface(preset.id)}
                 activeOpacity={0.7}
-                minHeight={MIN_TOUCH_SIZE}
               >
                 <Text style={[styles.surfaceBtnLabel, surfacePreset === preset.id && styles.surfaceBtnLabelSelected]}>
                   {preset.label}
@@ -275,7 +273,6 @@ export const DiagnosticConfigScreen: React.FC = () => {
               style={[styles.surfaceBtn, surfacePreset === 'autre' && styles.surfaceBtnSelected]}
               onPress={() => selectSurface('autre')}
               activeOpacity={0.7}
-              minHeight={MIN_TOUCH_SIZE}
             >
               <Text style={[styles.surfaceBtnLabel, surfacePreset === 'autre' && styles.surfaceBtnLabelSelected]}>
                 Autre

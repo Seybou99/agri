@@ -22,6 +22,8 @@ import { AcademyMySalesScreen } from '@screens/AcademyMySalesScreen';
 import { MarketplaceMyPurchasesScreen } from '@screens/MarketplaceMyPurchasesScreen';
 import { MarketplaceMySalesScreen } from '@screens/MarketplaceMySalesScreen';
 import { PlantDiseaseScreen } from '@screens/PlantDiseaseScreen';
+import { ParcelHistoryScreen } from '@screens/ParcelHistoryScreen';
+import { SettingsScreen } from '@screens/SettingsScreen';
 
 /** Params pour navigation imbriquée vers un onglet (ex. Marketplace avec filtre). */
 export type MainTabsParams =
@@ -58,6 +60,8 @@ export type RootStackParamList = {
   MarketplaceMyPurchases: undefined;
   MarketplaceMySales: undefined;
   PlantDisease: undefined;
+  ParcelHistory: undefined;
+  Settings: undefined;
   WeatherHome: { lat?: number; lng?: number; locationName?: string };
   Next7Days: { lat?: number; lng?: number; locationName?: string };
   Forecast: { lat?: number; lng?: number; locationName?: string };
@@ -94,6 +98,8 @@ export const AppNavigator: React.FC = () => {
         <Stack.Screen name="MarketplaceMyPurchases" component={MarketplaceMyPurchasesScreen} />
         <Stack.Screen name="MarketplaceMySales" component={MarketplaceMySalesScreen} />
         <Stack.Screen name="PlantDisease" component={PlantDiseaseScreen} />
+        <Stack.Screen name="ParcelHistory" component={ParcelHistoryScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="WeatherHome" component={WeatherHomeScreen} />
         <Stack.Screen name="Next7Days" component={Next7DaysScreen} />
         <Stack.Screen name="Forecast" component={ForecastScreen} />

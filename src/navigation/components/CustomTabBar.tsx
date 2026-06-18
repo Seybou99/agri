@@ -7,18 +7,17 @@ import {
   LayoutAnimation,
   UIManager,
   Platform,
-  Text,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import Svg, { Path } from 'react-native-svg';
 import {
   tabNavigatorStyles,
   tabBarColors,
   TAB_BAR_MARGIN_BOTTOM,
 } from '../styles/tabNavigatorStyles';
-import { colors, spacing, typography } from '@theme';
+import { colors } from '@theme';
+import { CameraIcon } from './TabIcons';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
 
 /** Tailles des icônes */
@@ -128,7 +127,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = (props) => {
         accessibilityLabel="Diagnostic maladie de plante"
       >
         <View style={styles.fabContent}>
-          <Text style={styles.fabIcon}>+</Text>
+          <CameraIcon color={colors.white} size={28} />
         </View>
       </TouchableOpacity>
 
@@ -188,11 +187,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryDark,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fabIcon: {
-    ...typography.h1,
-    color: colors.white,
-    fontWeight: '300',
-    lineHeight: 40,
   },
 });

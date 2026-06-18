@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, spacing, typography } from '@theme';
-import type { AirQuality } from '@types/weather';
+import type { AirQuality } from '../../types/weather';
 
 interface AirQualityCardProps {
   airQuality: AirQuality;

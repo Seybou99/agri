@@ -18,6 +18,8 @@ export interface LastReportSnapshot {
   soilTexture?: string;
   ph?: number;
   harvestLabel?: string;
+  /** Rapport complet en cache local (consultation hors ligne). */
+  offlineAvailable?: boolean;
 }
 
 const FILE_NAME = 'senegundo-last-report.json';

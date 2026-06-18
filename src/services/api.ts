@@ -1,6 +1,6 @@
 // Service API de base
 
-import { ApiResponse, PaginatedResponse } from '@types';
+import { ApiResponse, PaginatedResponse } from '../types';
 
 const API_BASE_URL = process.env.API_URL || 'https://api.example.com';
 
@@ -13,7 +13,7 @@ class ApiService {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: Omit<RequestInit, 'headers'> & { headers?: Record<string, string> } = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const token = ''; // TODO: Récupérer le token depuis le storage
@@ -22,7 +22,7 @@ class ApiService {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
     };

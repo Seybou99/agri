@@ -6,10 +6,13 @@ import { maybeCompleteAuthSession } from 'expo-web-browser';
 maybeCompleteAuthSession();
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from '@navigation/AppNavigator';
+import { BuyerAppNavigator } from '@client/navigation/BuyerAppNavigator';
+import { isBuyerApp } from '@config/appVariant';
 import { CartProvider } from '@contexts/CartContext';
 import { MarketplaceProvider } from '@contexts/MarketplaceContext';
 import { AcademyProvider } from '@contexts/AcademyContext';
 import { AuthProvider } from '@contexts/AuthContext';
+import { LanguageProvider } from '@contexts/LanguageContext';
 
 // Ignorer les warnings non bloquants (feature flags React Native)
 LogBox.ignoreLogs([
@@ -20,18 +23,22 @@ LogBox.ignoreLogs([
 ]);
 
 export default function App() {
+  const Navigator = isBuyerApp() ? BuyerAppNavigator : AppNavigator;
+
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <MarketplaceProvider>
-          <AcademyProvider>
-            <CartProvider>
-              <AppNavigator />
-              <StatusBar style="auto" />
-            </CartProvider>
-          </AcademyProvider>
-        </MarketplaceProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <MarketplaceProvider>
+            <AcademyProvider>
+              <CartProvider>
+                <Navigator />
+                <StatusBar style="auto" />
+              </CartProvider>
+            </AcademyProvider>
+          </MarketplaceProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }

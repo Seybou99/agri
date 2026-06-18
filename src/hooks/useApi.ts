@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ApiResponse } from '@types';
+import { ApiResponse } from '../types';
 import { apiService } from '@services/api';
 
 interface UseApiOptions {

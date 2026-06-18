@@ -68,6 +68,7 @@ export async function placeMarketplaceOrder(
   if (!isFirebaseConfigured() || !db) {
     throw new Error('Firebase non configuré.');
   }
+  const firestore = db;
 
   const payload = {
     buyerId: input.buyerId,
@@ -81,13 +82,13 @@ export async function placeMarketplaceOrder(
     createdAt: serverTimestamp(),
   };
 
-  const orderRef = await addDoc(collection(db, ORDERS), payload);
+  const orderRef = await addDoc(collection(firestore, ORDERS), payload);
 
   const bySeller = groupItemsBySeller(input.items);
   const salePromises = [...bySeller.entries()].map(([sellerId, lines]) => {
     const sellerName = lines[0]?.sellerDisplayName ?? 'Vendeur';
     const saleTotal = lines.reduce((s, l) => s + l.lineTotal, 0);
-    return addDoc(collection(db, SALES), {
+    return addDoc(collection(firestore, SALES), {
       orderId: orderRef.id,
       buyerId: input.buyerId,
       buyerDisplayName: input.buyerDisplayName,
@@ -111,8 +112,9 @@ export async function fetchBuyerMarketplaceOrders(
   buyerId: string
 ): Promise<MarketplaceOrder[]> {
   if (!db) return [];
+  const firestore = db;
   const q = query(
-    collection(db, ORDERS),
+    collection(firestore, ORDERS),
     where('buyerId', '==', buyerId),
     orderBy('createdAt', 'desc')
   );
@@ -124,8 +126,9 @@ export async function fetchSellerMarketplaceSales(
   sellerId: string
 ): Promise<MarketplaceSale[]> {
   if (!db) return [];
+  const firestore = db;
   const q = query(
-    collection(db, SALES),
+    collection(firestore, SALES),
     where('sellerId', '==', sellerId),
     orderBy('createdAt', 'desc')
   );

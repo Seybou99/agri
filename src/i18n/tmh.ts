@@ -1,0 +1,72 @@
+/**
+ * Tamasheq (Touareg) — parlé dans le nord du Mali (Kidal, Gao, Tombouctou…)
+ */
+import type { Translations } from './types';
+import fr from './fr';
+
+const tmh: Translations = {
+  ...fr,
+  common: {
+    ...fr.common,
+    cancel: 'Sɣer',
+    confirm: 'Awa',
+    save: 'Ens',
+    delete: 'Kkes',
+    back: 'Uɣal',
+    yes: 'Ih',
+    no: 'Wâr',
+    loading: 'Yusan…',
+    error: 'Tɣâwsa',
+    success: 'Yessefrak',
+    comingSoon: 'Ad yus',
+    comingSoonMsg: 'Tɣawsa ad tettas deg version timaynin.',
+  },
+  profile: {
+    ...fr.profile,
+    title: 'Aɣamaz inu',
+    notConnected: 'Wâr tesneqqed',
+    notConnectedMsg: 'Sneqqed d aɣamaz inu, tiratin d tiɣawsiwin.',
+    signIn: 'Sneqqed',
+    createAccount: 'Aru compte amaynu',
+    sectionAgricultural: 'Tagriwalt',
+    sectionMarket: 'Tasuk',
+    sectionAcademy: 'Tasɣiwalt',
+    sectionAccount: 'Compte',
+    myReports: 'Tiratin inu',
+    myReportsSubtitle: 'Aɣbalu n tiratin · wâr internet',
+    myCart: 'Akarru inu',
+    myPurchases: 'Isukan inu',
+    mySales: 'Icennaɣen inu',
+    settings: 'Tanɣilt',
+    settingsSubtitle: 'Tanɣilt, tizɣiwin, tamaheq',
+    signOut: 'Ffeɣ',
+    signOutConfirmTitle: 'Ffeɣ',
+    signOutConfirmMsg: 'Taɣennum ad toffeɣed?',
+    statPurchases: 'Isukan',
+    statSales: 'Icennaɣen',
+    statCart: 'Akarru',
+  },
+  settings: {
+    ...fr.settings,
+    title: 'Tanɣilt',
+    sectionAccount: 'Compte inu',
+    editProfile: 'Beddel aɣamaz',
+    changePassword: 'Beddel taɣult',
+    language: 'Tutlayt',
+    sectionNotifications: 'Tizɣiwin',
+    notifWeather: 'Tizɣiwin n wakal',
+    notifDiagnostic: 'Tizɣiwin n diagnostic',
+    notifMarket: 'Tizɣiwin n tasuk',
+    sectionApp: 'App',
+    offlineMode: 'Awalen wâr internet',
+    surfaceUnit: 'Tamazirt aniw',
+    clearCache: 'Sɣer cache',
+    clearCacheSub: 'Sers amadu',
+    sectionAbout: 'Deg wayen',
+    appVersion: 'Version n app',
+    contactSupport: 'Ɣer tallalt',
+    contactSupportSub: 'support@senegundo.com',
+  },
+};
+
+export default tmh;

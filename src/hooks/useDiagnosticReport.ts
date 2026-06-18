@@ -3,9 +3,10 @@
  * et les exposer au FieldReport. Données dynamiques selon lat/lng et cultures.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { PLANTS_REQUIREMENTS, AVAILABLE_CROPS } from '@constants/plants';
 import { fetchSoilData, fetchClimateData, calculateSuitabilityScore } from '@services/agronomy';
+import { loadOfflineReport } from '@services/offlineReportCache';
 import type { SoilData } from '@services/agronomy/soilService';
 import type { ClimateData } from '@services/agronomy/climateService';
 import type { MatchingResult } from '@services/agronomy/matchingEngine';
@@ -26,12 +27,15 @@ export interface DiagnosticReportState {
   otherCrops: IdealCropItem[];
   loading: boolean;
   error: string | null;
+  /** Données servies depuis le cache local (hors ligne). */
+  fromCache: boolean;
 }
 
 export function useDiagnosticReport(
   lat: number | undefined,
   lng: number | undefined,
-  crops: string[]
+  crops: string[],
+  options?: { parcelId?: string }
 ): DiagnosticReportState & { refetch: () => Promise<void> } {
   const [soil, setSoil] = useState<SoilData | null>(null);
   const [climate, setClimate] = useState<ClimateData | null>(null);
@@ -40,6 +44,23 @@ export function useDiagnosticReport(
   const [otherCrops, setOtherCrops] = useState<IdealCropItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
+  const cacheHydrated = useRef(false);
+
+  const applyCachedReport = useCallback(async (): Promise<boolean> => {
+    const parcelId = options?.parcelId;
+    if (!parcelId) return false;
+    const cached = await loadOfflineReport(parcelId);
+    if (!cached?.soil && !cached?.climate) return false;
+    setSoil(cached.soil);
+    setClimate(cached.climate);
+    setMatchingByCrop(cached.matchingByCrop ?? {});
+    setIdealCrops(cached.idealCrops ?? []);
+    setOtherCrops(cached.otherCrops ?? []);
+    setFromCache(true);
+    setError(null);
+    return true;
+  }, [options?.parcelId]);
 
   const fetch = useCallback(async () => {
     if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng)) {
@@ -54,6 +75,7 @@ export function useDiagnosticReport(
       ]);
       setSoil(soilData);
       setClimate(climateData);
+      setFromCache(false);
 
       const matching: Record<string, MatchingResult> = {};
       for (const key of crops) {
@@ -76,20 +98,54 @@ export function useDiagnosticReport(
       setIdealCrops(allScores.slice(0, 3));
       setOtherCrops(allScores.slice(3));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur chargement rapport');
-      setSoil(null);
-      setClimate(null);
-      setMatchingByCrop({});
-      setIdealCrops([]);
-      setOtherCrops([]);
+      const restored = await applyCachedReport();
+      if (!restored) {
+        setError(e instanceof Error ? e.message : 'Erreur chargement rapport');
+        setSoil(null);
+        setClimate(null);
+        setMatchingByCrop({});
+        setIdealCrops([]);
+        setOtherCrops([]);
+        setFromCache(false);
+      } else {
+        setError('Hors ligne — rapport en cache affiché');
+      }
     } finally {
       setLoading(false);
     }
-  }, [lat, lng, crops.join(',')]);
+  }, [lat, lng, crops.join(','), applyCachedReport]);
 
   useEffect(() => {
-    fetch();
-  }, [fetch]);
+    cacheHydrated.current = false;
+  }, [options?.parcelId]);
 
-  return { soil, climate, matchingByCrop, idealCrops, otherCrops, loading, error, refetch: fetch };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (cacheHydrated.current || !options?.parcelId) {
+        fetch();
+        return;
+      }
+      const ok = await applyCachedReport();
+      if (cancelled) return;
+      cacheHydrated.current = true;
+      if (ok) setLoading(false);
+      fetch();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetch, applyCachedReport, options?.parcelId]);
+
+  return {
+    soil,
+    climate,
+    matchingByCrop,
+    idealCrops,
+    otherCrops,
+    loading,
+    error,
+    fromCache,
+    refetch: fetch,
+  };
 }

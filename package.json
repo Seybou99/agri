@@ -4,8 +4,12 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "start:client": "APP_VARIANT=acheteur expo start",
+    "start:agriculteur": "APP_VARIANT=agriculteur expo start",
     "android": "expo run:android",
+    "android:client": "APP_VARIANT=acheteur expo run:android",
     "ios": "expo run:ios",
+    "ios:client": "APP_VARIANT=acheteur expo run:ios",
     "test:isda": "npx tsx scripts/test-isda-local.ts",
     "api:dev": "npx vercel dev --listen 3000",
     "deploy:api": "vercel --prod --archive=tgz"
@@ -21,6 +25,7 @@
     "expo-application": "~7.0.8",
     "expo-auth-session": "~7.0.11",
     "expo-blur": "~15.0.8",
+    "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.9",
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.22",

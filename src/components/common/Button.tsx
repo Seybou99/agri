@@ -9,6 +9,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  style?: ViewStyle;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -18,6 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   fullWidth = false,
+  style,
 }) => {
   const buttonStyles: ViewStyle[] = [styles.button];
   const textStyles: TextStyle[] = [styles.text];
@@ -46,6 +48,8 @@ export const Button: React.FC<ButtonProps> = ({
 
   const isDisabled = Boolean(disabled) || Boolean(loading);
   const isLoading = Boolean(loading);
+
+  if (style) buttonStyles.push(style);
 
   return (
     <TouchableOpacity

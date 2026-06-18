@@ -6,6 +6,9 @@ declare module 'react-native-dotenv' {
   export const API_URL: string;
   export const API_KEY: string;
   export const ENV: 'development' | 'production' | 'test';
+
+  /** agriculteur (défaut) | acheteur — choisit la navigation au démarrage */
+  export const APP_VARIANT: string;
   
   // Firebase
   export const FIREBASE_API_KEY: string;

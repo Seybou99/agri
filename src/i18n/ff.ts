@@ -1,0 +1,72 @@
+/**
+ * Peul / Fulfuldé (Fula) — 2ème langue du Mali, locuteurs Peul/Fula
+ */
+import type { Translations } from './types';
+import fr from './fr';
+
+const ff: Translations = {
+  ...fr,
+  common: {
+    ...fr.common,
+    cancel: 'Haaytu',
+    confirm: 'Wallitii',
+    save: 'Wacc',
+    delete: 'Momtu',
+    back: 'Rewo',
+    yes: 'Eey',
+    no: 'Alaa',
+    loading: 'Ɓetaama…',
+    error: 'Juumre',
+    success: 'Sɓannde',
+    comingSoon: 'Waran haa ɓooyii',
+    comingSoonMsg: 'Golle ngoo waran nder version koɗum.',
+  },
+  profile: {
+    ...fr.profile,
+    title: 'Miin pelle am',
+    notConnected: 'Alaa laawol',
+    notConnectedMsg: 'Naatu ka sɓannde pelle maa, rapporji maa e comande.',
+    signIn: 'Naatu',
+    createAccount: 'Waɗ compte kesam',
+    sectionAgricultural: 'Ngesa',
+    sectionMarket: 'Luumo',
+    sectionAcademy: 'Janngirde',
+    sectionAccount: 'Compte',
+    myReports: 'Rapporji am',
+    myReportsSubtitle: 'Diagnostic winndannde · yoɓaaki internet',
+    myCart: 'Panier am',
+    myPurchases: 'Nde miin sosii',
+    mySales: 'Nde miin wili',
+    settings: 'Faande',
+    settingsSubtitle: 'Moƴƴinde, kunnafoni, demngal',
+    signOut: 'Yah',
+    signOutConfirmTitle: 'Yah',
+    signOutConfirmMsg: 'Mbiy-ɗaa tawɗaa yaha?',
+    statPurchases: 'Sosii',
+    statSales: 'Wili',
+    statCart: 'Panier',
+  },
+  settings: {
+    ...fr.settings,
+    title: 'Faande',
+    sectionAccount: 'Compte am',
+    editProfile: 'Waylii pelle',
+    changePassword: 'Waylii ɓesngu guurki',
+    language: 'Demngal',
+    sectionNotifications: 'Kunnafoni',
+    notifWeather: 'Habraru lajal',
+    notifDiagnostic: 'Habraru diagnostic',
+    notifMarket: 'Habraru luumo',
+    sectionApp: 'Newnde',
+    offlineMode: 'Alaa internet mode',
+    surfaceUnit: 'Minɗo ngesa',
+    clearCache: 'Momtu cache',
+    clearCacheSub: 'Weltina ɓeydorde',
+    sectionAbout: 'Ko e maa',
+    appVersion: 'Version newnde',
+    contactSupport: 'Naat wallitii',
+    contactSupportSub: 'support@senegundo.com',
+  },
+};
+
+export default ff;

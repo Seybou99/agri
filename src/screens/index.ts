@@ -14,3 +14,4 @@ export * from './WeatherDetailScreen';
 export * from './WeatherHomeScreen';
 export * from './Next7DaysScreen';
 export * from './ForecastScreen';
+export * from './SettingsScreen';

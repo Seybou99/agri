@@ -8,7 +8,7 @@ SeneGundo est une application React Native construite avec Expo, utilisant Fireb
 
 ### Modèle (Models)
 Les modèles définissent la structure des données :
-- **User** : Profil utilisateur (investisseur, agriculteur, acheteur)
+- **User** : Profil utilisateur (`agriculteur`, `utilisateur` / acheteur, `administrateur` ; `investisseur` / partenaire B2B prévu). Voir [README.md](./README.md) — stratégie une base, plusieurs variantes d’app.
 - **Diagnostic** : Rapport d'analyse d'un terrain pour une culture
 - **Product** : Produit de la marketplace (récolte ou intrant)
 - **Order** : Commande dans la marketplace

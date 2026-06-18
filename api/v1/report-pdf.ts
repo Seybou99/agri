@@ -30,11 +30,19 @@ interface YieldData {
   yieldKgHa: string;
 }
 
+interface ClimateInfo {
+  annualRainfall?: number | null;
+  avgTemperature?: number | null;
+  rainySeasonMonths?: string[];
+  drySeasonMonths?: string[];
+}
+
 interface ReportBody {
   parcel?: ParcelData;
   kpis?: KPIData[];
   yield?: YieldData;
-  growth?: { value: string; trend: string; period: string };
+  climate?: ClimateInfo;
+  yieldTrend?: { value: string; trend: string; period: string };
   recommendations?: string[];
   notes?: string;
 }
@@ -90,12 +98,28 @@ function buildPdfBuffer(body: ReportBody): Promise<Buffer> {
       doc.moveDown(1);
     }
 
-    // Pluviométrie / tendance
-    const growth = body.growth;
-    if (growth) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Pluviométrie', { continued: false });
+    // Données climatiques
+    const climate = body.climate;
+    if (climate) {
+      doc.fontSize(14).font('Helvetica-Bold').text('Données climatiques', { continued: false });
       doc.font('Helvetica').fontSize(11);
-      doc.text(`${growth.value} (tendance ${growth.trend === 'up' ? 'à la hausse' : 'à la baisse'})`, { continued: false });
+      if (climate.annualRainfall != null)
+        doc.text(`Pluviométrie annuelle : ${Math.round(climate.annualRainfall)} mm/an`, { continued: false });
+      if (climate.avgTemperature != null)
+        doc.text(`Température moyenne : ${climate.avgTemperature}°C`, { continued: false });
+      if (climate.rainySeasonMonths && climate.rainySeasonMonths.length > 0)
+        doc.text(`Saison des pluies : ${climate.rainySeasonMonths.join(', ')}`, { continued: false });
+      if (climate.drySeasonMonths && climate.drySeasonMonths.length > 0)
+        doc.text(`Saison sèche : ${climate.drySeasonMonths.join(', ')}`, { continued: false });
+      doc.moveDown(1);
+    }
+
+    // Tendance de rendement
+    const yieldTrend = body.yieldTrend;
+    if (yieldTrend) {
+      doc.fontSize(14).font('Helvetica-Bold').text('Tendance de rendement', { continued: false });
+      doc.font('Helvetica').fontSize(11);
+      doc.text(`${yieldTrend.value} (tendance ${yieldTrend.trend === 'up' ? 'à la hausse' : 'à la baisse'}) — ${yieldTrend.period}`, { continued: false });
       doc.moveDown(1);
     }
 

@@ -22,8 +22,10 @@ import type { GrowthPeriod } from '@components/fieldReport';
 import type { KPICardData } from '@components/fieldReport';
 import type { GrowthChartData } from '@components/fieldReport';
 import { PLANTS_REQUIREMENTS, getMoisRecolte } from '@constants/plants';
-import { patchLastReport } from '@services/lastReportStorage';
+import { persistReportOffline } from '@services/persistReportOffline';
+import { loadOfflineReport } from '@services/offlineReportCache';
 import { useDiagnosticReport } from '@hooks/useDiagnosticReport';
+import type { ApiRecommendationRow } from '@models/ParcelHistory';
 import { isDefaultSoilData, type SoilData } from '@services/agronomy/soilService';
 import { useRecommendationsFromApi } from '../hooks/useRecommendationsFromApi';
 import { useProfitabilityFromApi } from '../hooks/useProfitabilityFromApi';
@@ -180,7 +182,9 @@ export const FieldReportScreen: React.FC = () => {
   const lat = params?.lat;
   const lng = params?.lng;
   const crops = params?.crops ?? [];
-  const { soil, climate, matchingByCrop, idealCrops, otherCrops, loading, error, refetch } = useDiagnosticReport(lat, lng, crops);
+  const { soil, climate, matchingByCrop, idealCrops, otherCrops, loading, error, fromCache, refetch } =
+    useDiagnosticReport(lat, lng, crops, { parcelId: params?.parcelId });
+  const [cachedRecommendations, setCachedRecommendations] = useState<ApiRecommendationRow[]>([]);
   const { recommendations: apiRecommendations } = useRecommendationsFromApi({
     pluviometrieMm: climate?.annualRainfall,
     region: params?.locationName,
@@ -188,6 +192,18 @@ export const FieldReportScreen: React.FC = () => {
   const { byCulture: profitabilityByCulture } = useProfitabilityFromApi(crops);
   const calendarGuideData = useCalendarGuideData();
   const agroData = useAgroData(lat, lng);
+
+  useEffect(() => {
+    if (!params?.parcelId) return;
+    void loadOfflineReport(params.parcelId).then((cached) => {
+      if (cached?.apiRecommendations?.length) {
+        setCachedRecommendations(cached.apiRecommendations);
+      }
+    });
+  }, [params?.parcelId]);
+
+  const displayRecommendations =
+    apiRecommendations.length > 0 ? apiRecommendations : fromCache ? cachedRecommendations : [];
 
   const parcel = useMemo(() => {
     if (!params?.parcelId && !crops.length) return MOCK_PARCEL_DEFAULT;
@@ -217,23 +233,39 @@ export const FieldReportScreen: React.FC = () => {
   );
 
   useEffect(() => {
-    if (loading || !params?.parcelId || !soil || idealCrops.length === 0) return;
+    if (loading || fromCache || !params?.parcelId || !soil || !climate || idealCrops.length === 0) return;
     const top = idealCrops[0];
-    void patchLastReport({
+    const gs = top.key ? PLANTS_REQUIREMENTS[top.key]?.growingSeason : undefined;
+    const harvestLabel =
+      gs?.cycleLengthMonths != null && gs.start
+        ? `Récolte ${getMoisRecolte(gs.start, gs.cycleLengthMonths)}`
+        : undefined;
+
+    void persistReportOffline({
       parcelId: params.parcelId,
       locationName: params.locationName ?? 'Ma parcelle',
       crops,
       surfaceHa: params.surface ?? parcel.surfaceHa,
       lat: lat!,
       lng: lng!,
+      soil,
+      climate,
+      matchingByCrop,
+      idealCrops,
+      otherCrops,
+      apiRecommendations: apiRecommendations.map((r) => ({
+        culture: r.culture,
+        culture_id: r.culture_id,
+        score: r.score,
+      })),
       topCropKey: top.key,
       topCropName: top.name,
       aptitudeScore: top.result.score,
-      soilTexture: soil.texture,
-      ph: soil.ph,
+      harvestLabel,
     });
   }, [
     loading,
+    fromCache,
     params?.parcelId,
     params?.locationName,
     params?.surface,
@@ -241,7 +273,11 @@ export const FieldReportScreen: React.FC = () => {
     lng,
     crops,
     soil,
+    climate,
     idealCrops,
+    otherCrops,
+    matchingByCrop,
+    apiRecommendations,
     parcel.surfaceHa,
   ]);
 
@@ -362,6 +398,14 @@ export const FieldReportScreen: React.FC = () => {
         />
         <ReportTabs active={activeTab} onSelect={setActiveTab} />
 
+        {fromCache && !loading && (
+          <View style={styles.cacheBanner}>
+            <Text style={styles.cacheBannerText}>
+              Mode hors ligne — rapport et recommandations enregistrés sur l&apos;appareil
+            </Text>
+          </View>
+        )}
+
         {error && hasCoords && (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
@@ -428,11 +472,11 @@ export const FieldReportScreen: React.FC = () => {
                 ) : null}
               </View>
             )}
-            {apiRecommendations.length > 0 && (
+            {displayRecommendations.length > 0 && (
               <View style={styles.apiRecoCard}>
                 <Text style={styles.apiRecoTitle}>Cultures recommandées (selon sol et climat)</Text>
                 <View style={styles.apiRecoList}>
-                  {apiRecommendations.slice(0, 5).map((r) => (
+                  {displayRecommendations.slice(0, 5).map((r) => (
                     <View key={r.culture_id} style={styles.apiRecoRow}>
                       <Text style={styles.apiRecoName}>{r.culture}</Text>
                       <Text style={styles.apiRecoScore}>{r.score}/100</Text>
@@ -590,6 +634,19 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: typography.body.fontSize,
     color: colors.text.secondary,
+  },
+  cacheBanner: {
+    backgroundColor: colors.primaryLight + '44',
+    borderRadius: 10,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primaryLight,
+  },
+  cacheBannerText: {
+    fontSize: typography.bodySmall.fontSize,
+    color: colors.primaryDark,
+    textAlign: 'center',
   },
   errorBox: {
     backgroundColor: colors.gray[100],

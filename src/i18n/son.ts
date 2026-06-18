@@ -1,0 +1,81 @@
+/**
+ * Sonrhaï (Songhay) — parlé dans la région de Gao, Tombouctou et Ménaka
+ * Variante Koyraboro Senni (Gao) utilisée comme référence
+ */
+import type { Translations } from './types';
+import fr from './fr';
+
+const son: Translations = {
+  ...fr,
+  common: {
+    ...fr.common,
+    cancel: 'Kabu',
+    confirm: 'Tilas',
+    save: 'Kaara',
+    delete: 'Wey',
+    back: 'Bande',
+    yes: 'Iyo',
+    no: 'Wala',
+    loading: 'Ga koy…',
+    error: 'Ciya',
+    success: 'Koy foo',
+    comingSoon: 'Ga na za',
+    comingSoonMsg: 'Nda hanse ga na za version tilas ra.',
+  },
+  tabs: {
+    home: 'Ganda',
+    stats: 'Statistiki',
+    market: 'Haw',
+    messages: 'Manse',
+  },
+  profile: {
+    ...fr.profile,
+    title: 'Hiiray boro inu',
+    notConnected: 'Mana jongu',
+    notConnectedMsg: 'Jongu ka hiiray boro inu, rapport nd-ize nd-ize windo.',
+    signIn: 'Jongu',
+    createAccount: 'Compte koyyan windi',
+    sectionAgricultural: 'Jeeci',
+    sectionMarket: 'Haw',
+    sectionAcademy: 'Kaŋ Koyra',
+    sectionAccount: 'Compte',
+    myReports: 'Rapport-ize inu',
+    myReportsSubtitle: 'Diagnostic tarihi · internet mana gonda',
+    myCart: 'Panier inu',
+    myPurchases: 'Saaji-ze inu',
+    mySales: 'Feeri-ze inu',
+    myGuidesBought: 'Guide saaji-ze inu',
+    myGuidesSold: 'Guide feeri-ze inu',
+    settings: 'Sohon',
+    settingsSubtitle: 'Sohon, faabu, ciine',
+    signOut: 'Biya',
+    signOutConfirmTitle: 'Biya',
+    signOutConfirmMsg: 'I ga haw biya sanda?',
+    statPurchases: 'Saaji',
+    statSales: 'Feeri',
+    statCart: 'Panier',
+  },
+  settings: {
+    ...fr.settings,
+    title: 'Sohon',
+    sectionAccount: 'Compte inu',
+    editProfile: 'Hiiray boro beddeli',
+    changePassword: 'Mot de passe beddeli',
+    language: 'Ciine',
+    sectionNotifications: 'Faabu-ze',
+    notifWeather: 'Hawganda faabu',
+    notifDiagnostic: 'Diagnostic faabu',
+    notifMarket: 'Haw faabu',
+    sectionApp: 'App',
+    offlineMode: 'Internet mana gonda windo',
+    surfaceUnit: 'Jeeci tilas',
+    clearCache: 'Cache wey',
+    clearCacheSub: 'Kaaya han kaaru',
+    sectionAbout: 'Wane boŋ ra',
+    appVersion: 'App version',
+    contactSupport: 'Tallafi boro gaabu',
+    contactSupportSub: 'support@senegundo.com',
+  },
+};
+
+export default son;

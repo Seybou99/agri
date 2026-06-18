@@ -72,7 +72,12 @@ export const LastReportCard: React.FC<LastReportCardProps> = ({
           end={{ x: 1, y: 1 }}
           style={styles.card}
         >
-          <Text style={styles.badge}>DERNIER RAPPORT</Text>
+          <View style={styles.badgeRow}>
+            <Text style={styles.badge}>DERNIER RAPPORT</Text>
+            {report.offlineAvailable && (
+              <Text style={styles.offlinePill}>Hors ligne</Text>
+            )}
+          </View>
           <Text style={styles.headline}>
             {report.topCropName ?? cropLine(report)}
             {report.locationName ? ` · ${report.locationName.split(',')[0]}` : ''}
@@ -162,12 +167,27 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '700',
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
   badge: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
     color: 'rgba(255,255,255,0.85)',
-    marginBottom: spacing.sm,
+  },
+  offlinePill: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   headline: {
     fontSize: 18,

@@ -25,6 +25,7 @@ module.exports = function (api) {
             '@models': './src/models',
             '@contexts': './src/contexts',
             '@config': './src/config',
+            '@client': './src/client',
           },
         },
       ],

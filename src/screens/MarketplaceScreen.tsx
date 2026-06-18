@@ -18,11 +18,13 @@ import { MarketplaceRayon } from '@models/Product';
 import { colors, spacing, typography } from '@theme';
 import { ProductList } from '../components/marketplace/ProductList';
 import type { TabParamList } from '@navigation/TabNavigator';
+import type { BuyerTabParamList } from '@client/navigation/BuyerTabNavigator';
 import type { AppNavigationProp } from '@navigation/AppNavigator';
 import { useCart } from '@contexts/CartContext';
 import { useMarketplace } from '@contexts/MarketplaceContext';
 import { useAuth } from '@hooks/useAuth';
 import { canSellOnMarketplace } from '@constants/marketplaceRoles';
+import { isBuyerApp } from '@config/appVariant';
 
 const RAYONS: { key: MarketplaceRayon; label: string; icon: string }[] = [
   { key: 'INTRANTS_EQUIPEMENTS', label: 'Intrants & Équipements', icon: '🌱' },
@@ -30,7 +32,9 @@ const RAYONS: { key: MarketplaceRayon; label: string; icon: string }[] = [
   { key: 'ELEVAGE', label: 'Bétail & Élevage', icon: '🐄' },
 ];
 
-type MarketplaceRouteProp = RouteProp<TabParamList, 'Marketplace'>;
+type MarketplaceRouteProp =
+  | RouteProp<TabParamList, 'Marketplace'>
+  | RouteProp<BuyerTabParamList, 'Explorer'>;
 
 export const MarketplaceScreen: React.FC = () => {
   const route = useRoute<MarketplaceRouteProp>();
@@ -38,21 +42,29 @@ export const MarketplaceScreen: React.FC = () => {
   const { totalItems } = useCart();
   const { products } = useMarketplace();
   const { userProfile, isAuthenticated } = useAuth();
-  const filterCategory = route.params?.filterCategory;
-  const filterCrop = route.params?.filterCrop;
+  const params = route.params as
+    | { filterCategory?: string; filterCrop?: string; initialRayon?: MarketplaceRayon }
+    | undefined;
+  const filterCategory = params?.filterCategory;
+  const filterCrop = params?.filterCrop;
+  const initialRayon = params?.initialRayon;
 
   const canAddProduct =
-    isAuthenticated && canSellOnMarketplace(userProfile?.role);
+    !isBuyerApp() && isAuthenticated && canSellOnMarketplace(userProfile?.role);
 
   const [selectedRayon, setSelectedRayon] = useState<MarketplaceRayon>(
-    filterCategory === 'Semences' ? 'INTRANTS_EQUIPEMENTS' : 'INTRANTS_EQUIPEMENTS'
+    initialRayon ?? (filterCategory === 'Semences' ? 'INTRANTS_EQUIPEMENTS' : 'INTRANTS_EQUIPEMENTS')
   );
 
   useEffect(() => {
+    if (initialRayon) {
+      setSelectedRayon(initialRayon);
+      return;
+    }
     if (filterCategory === 'Semences') {
       setSelectedRayon('INTRANTS_EQUIPEMENTS');
     }
-  }, [filterCategory]);
+  }, [filterCategory, initialRayon]);
 
   const filteredProducts = useMemo(() => {
     let list = products.filter((p) => p.rayon === selectedRayon);
